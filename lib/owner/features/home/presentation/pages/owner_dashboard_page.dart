@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
 import '../../../plan/presentation/pages/add_plan__page.dart';
+import '../../../plan/presentation/pages/plan_details_page.dart';
 import '../../../profile/presentation/pages/create_gym_profile_page.dart';
 import '../cubit/owner_dashboard_cubit.dart';
 import '../cubit/owner_dashboard_state.dart';
@@ -17,7 +18,6 @@ class OwnerDashboardPage extends StatefulWidget {
 class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
 
 
-  @override
   @override
   void initState() {
     super.initState();
@@ -550,6 +550,22 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                           ),
 
                           quickActionCard(
+                            icon: Icons.description_outlined,
+
+                            title: "Plans",
+
+                            onTap: () {
+                              Navigator.push(
+                                context,
+
+                                MaterialPageRoute(
+                                  builder: (_) => const PlanDetailsPage(),
+                                ),
+                              );
+                            },
+                          ),
+
+                          quickActionCard(
                             icon: Icons.groups_2_rounded,
 
                             title: "Members",
@@ -557,13 +573,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                             onTap: () {},
                           ),
 
-                          quickActionCard(
-                            icon: Icons.description_outlined,
 
-                            title: "Reports",
-
-                            onTap: () {},
-                          ),
                         ],
                       ),
 

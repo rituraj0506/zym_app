@@ -1,10 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:zymmanagement/network/api_end_point.dart';
-import 'package:zymmanagement/network/secure_storge.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
+import '../../../../models/gym_plan_response.dart';
+import '../cubit/plan_cubit.dart';
+import '../cubit/plan_state.dart';
+import 'add_plan__page.dart';
 
 class PlanDetailsPage extends StatefulWidget {
   const PlanDetailsPage({super.key});
@@ -17,164 +17,11 @@ class PlanDetailsPage extends StatefulWidget {
 class _PlanDetailsPageState
     extends State<PlanDetailsPage> {
 
-  bool isLoading = true;
-
-  List plans = [];
-
   @override
   void initState() {
     super.initState();
-    getPlans();
-  }
 
-  Future<void> getPlans() async {
-
-    try {
-
-      final token =
-      await SecureStorageService.getToken();
-
-      final response = await http.get(
-        Uri.parse(
-          "${Apiendpoint.baseUrl}/plans",
-        ),
-
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      );
-
-      final decoded = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-
-        setState(() {
-          plans = decoded["data"] ?? [];
-        });
-
-      } else {
-
-        showMessage(
-          decoded["message"] ??
-              "Failed to load plans",
-        );
-      }
-    } catch (e) {
-
-      showMessage(e.toString());
-    }
-
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  Future<void> deletePlan(String id) async {
-
-    try {
-
-      final token =
-      await SecureStorageService.getToken();
-
-      final response = await http.delete(
-        Uri.parse(
-          "${Apiendpoint.baseUrl}/plans/$id",
-        ),
-
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      );
-
-      final decoded = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-
-        showMessage("Plan deleted");
-
-        getPlans();
-
-      } else {
-
-        showMessage(
-          decoded["message"] ??
-              "Delete failed",
-        );
-      }
-    } catch (e) {
-
-      showMessage(e.toString());
-    }
-  }
-
-  void showMessage(String msg) {
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-      ),
-    );
-  }
-
-  Future<void> confirmDelete(
-      String id,
-      String planName,
-      ) async {
-
-    showDialog(
-      context: context,
-
-      builder: (context) {
-
-        return AlertDialog(
-
-          shape: RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(20),
-          ),
-
-          title: const Text("Delete Plan"),
-
-          content: Text(
-            "Delete $planName ?",
-          ),
-
-          actions: [
-
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-
-              child: const Text("Cancel"),
-            ),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                AppColors.error,
-              ),
-
-              onPressed: () {
-
-                Navigator.pop(context);
-
-                deletePlan(id);
-              },
-
-              child: const Text(
-                "Delete",
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+    context.read<PlanCubit>().getAllPlans();
   }
 
   Color getCardColor(int index) {
@@ -197,820 +44,851 @@ class _PlanDetailsPageState
 
     final bool isTablet = width >= 700;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+    return BlocConsumer<PlanCubit, PlanState>(
 
-      floatingActionButton:
-      FloatingActionButton.extended(
+      listener: (context, state) {
 
-        backgroundColor:
-        AppColors.primary,
+        if (state is PlanDetailsError) {
 
-        elevation: 0,
-
-        onPressed: () {
-
-          Navigator.pushNamed(
-            context,
-            "/addPlan",
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+            ),
           );
-        },
+        }
+      },
 
-        icon: const Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
+      builder: (context, state) {
 
-        label: const Text(
-          "Add Plan",
+        final isLoading =
+        state is PlanDetailsLoading;
 
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+        final plans =
+        state is PlanDetailsLoaded
+            ? state.plans.data ?? []
+            : <GymPlan>[];
 
-      body: SafeArea(
-        child: RefreshIndicator(
+        return Scaffold(
+          backgroundColor: const Color(0xFFF5F6FA),
 
-          color: AppColors.primary,
+          floatingActionButton:
+          FloatingActionButton.extended(
 
-          onRefresh: getPlans,
+            backgroundColor:
+            AppColors.primary,
 
-          child: SingleChildScrollView(
+            elevation: 0,
 
-            physics:
-            const AlwaysScrollableScrollPhysics(),
+            onPressed: () {
 
-            padding: EdgeInsets.symmetric(
-              horizontal: isTablet ? 28 : 18,
-              vertical: isTablet ? 24 : 18,
+              Navigator.pushNamed(
+                context,
+                "/addPlan",
+              );
+            },
+
+            icon: const Icon(
+              Icons.add,
+              color: Colors.white,
             ),
 
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+            label: const Text(
+              "Add Plan",
 
-              children: [
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
 
-                /// HEADER
-                Row(
+          body: SafeArea(
+            child: RefreshIndicator(
+
+              color: AppColors.primary,
+
+              onRefresh: () async {
+                context
+                    .read<PlanCubit>()
+                    .getAllPlans();
+              },
+
+              child: SingleChildScrollView(
+
+                physics:
+                const AlwaysScrollableScrollPhysics(),
+
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 28 : 18,
+                  vertical: isTablet ? 24 : 18,
+                ),
+
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
                   children: [
 
-                    Container(
-                      height:
-                      isTablet ? 54 : 48,
+                    /// HEADER
+                    Row(
+                      children: [
 
-                      width:
-                      isTablet ? 54 : 48,
+                        Container(
+                          height:
+                          isTablet ? 54 : 48,
+
+                          width:
+                          isTablet ? 54 : 48,
+
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+
+                            borderRadius:
+                            BorderRadius.circular(
+                                16),
+
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors
+                                    .primary
+                                    .withOpacity(.08),
+
+                                blurRadius: 22,
+                                offset:
+                                const Offset(
+                                    0, 8),
+                              ),
+                            ],
+                          ),
+
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.pop(
+                                  context);
+                            },
+
+                            icon: const Icon(
+                              Icons
+                                  .arrow_back_ios_new,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(
+                            width:
+                            isTablet
+                                ? 18
+                                : 14),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment
+                                .start,
+
+                            children: [
+
+                              Text(
+                                "Plan Management",
+
+                                style: TextStyle(
+                                  fontSize:
+                                  isTablet
+                                      ? 26
+                                      : 21,
+
+                                  fontWeight:
+                                  FontWeight.w700,
+
+                                  color: AppColors
+                                      .textPrimary,
+                                ),
+                              ),
+
+                              const SizedBox(
+                                  height: 4),
+
+                              Text(
+                                "Manage gym membership plans",
+
+                                style: TextStyle(
+                                  fontSize:
+                                  isTablet
+                                      ? 15
+                                      : 13,
+
+                                  color: AppColors
+                                      .textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(
+                      height:
+                      isTablet ? 34 : 28,
+                    ),
+
+                    /// SUMMARY CARD
+                    Container(
+                      width: double.infinity,
+
+                      padding: EdgeInsets.all(
+                        isTablet ? 28 : 22,
+                      ),
 
                       decoration: BoxDecoration(
-                        color: Colors.white,
 
                         borderRadius:
                         BorderRadius.circular(
-                            16),
+                            30),
+
+                        gradient:
+                        const LinearGradient(
+
+                          begin:
+                          Alignment.topLeft,
+
+                          end: Alignment
+                              .bottomRight,
+
+                          colors: [
+                            Color(0xFF8B5CF6),
+                            Color(0xFF6D28D9),
+                          ],
+                        ),
 
                         boxShadow: [
+
                           BoxShadow(
                             color: AppColors
                                 .primary
-                                .withOpacity(.08),
+                                .withOpacity(.28),
 
-                            blurRadius: 22,
+                            blurRadius: 30,
+
                             offset:
                             const Offset(
-                                0, 8),
+                                0, 12),
                           ),
                         ],
                       ),
 
-                      child: IconButton(
-                        onPressed: () {
-                          Navigator.pop(
-                              context);
-                        },
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
 
-                        icon: const Icon(
-                          Icons
-                              .arrow_back_ios_new,
-                          size: 20,
-                        ),
+                        children: [
+
+                          Text(
+                            "Total Plans",
+
+                            style: TextStyle(
+                              color: Colors.white
+                                  .withOpacity(.9),
+
+                              fontSize:
+                              isTablet
+                                  ? 16
+                                  : 13,
+
+                              fontWeight:
+                              FontWeight.w500,
+                            ),
+                          ),
+
+                          SizedBox(
+                            height:
+                            isTablet
+                                ? 16
+                                : 10,
+                          ),
+
+                          Text(
+                            "${plans.length}",
+
+                            style: TextStyle(
+                              color: Colors.white,
+
+                              fontSize:
+                              isTablet
+                                  ? 42
+                                  : 34,
+
+                              fontWeight:
+                              FontWeight.w700,
+                            ),
+                          ),
+
+                          SizedBox(
+                            height:
+                            isTablet
+                                ? 22
+                                : 18,
+                          ),
+
+                          Row(
+                            children: [
+
+                              Expanded(
+                                child: summaryItem(
+                                  title: "Plans",
+                                  value:
+                                  "${plans.length}",
+                                ),
+                              ),
+
+                              Expanded(
+                                child: summaryItem(
+                                  title: "Active",
+                                  value:
+                                  "${plans.where((e) => e.isActive == true).length}",
+                                ),
+                              ),
+
+                              Expanded(
+                                child: summaryItem(
+                                  title: "Inactive",
+                                  value:
+                                  "${plans.where((e) => e.isActive == false).length}",
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
 
                     SizedBox(
-                        width:
-                        isTablet
-                            ? 18
-                            : 14),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
-
-                        children: [
-
-                          Text(
-                            "Plan Management",
-
-                            style: TextStyle(
-                              fontSize:
-                              isTablet
-                                  ? 26
-                                  : 21,
-
-                              fontWeight:
-                              FontWeight.w700,
-
-                              color: AppColors
-                                  .textPrimary,
-                            ),
-                          ),
-
-                          const SizedBox(
-                              height: 4),
-
-                          Text(
-                            "Manage gym membership plans",
-
-                            style: TextStyle(
-                              fontSize:
-                              isTablet
-                                  ? 15
-                                  : 13,
-
-                              color: AppColors
-                                  .textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(
-                  height:
-                  isTablet ? 34 : 28,
-                ),
-
-                /// SUMMARY CARD
-                Container(
-                  width: double.infinity,
-
-                  padding: EdgeInsets.all(
-                    isTablet ? 28 : 22,
-                  ),
-
-                  decoration: BoxDecoration(
-
-                    borderRadius:
-                    BorderRadius.circular(
-                        30),
-
-                    gradient:
-                    const LinearGradient(
-
-                      begin:
-                      Alignment.topLeft,
-
-                      end: Alignment
-                          .bottomRight,
-
-                      colors: [
-                        Color(0xFF8B5CF6),
-                        Color(0xFF6D28D9),
-                      ],
+                      height:
+                      isTablet ? 34 : 28,
                     ),
 
-                    boxShadow: [
+                    /// SECTION TITLE
+                    Row(
+                      mainAxisAlignment:
+                      MainAxisAlignment
+                          .spaceBetween,
 
-                      BoxShadow(
-                        color: AppColors
-                            .primary
-                            .withOpacity(.28),
-
-                        blurRadius: 30,
-
-                        offset:
-                        const Offset(
-                            0, 12),
-                      ),
-                    ],
-                  ),
-
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
-
-                    children: [
-
-                      Text(
-                        "Total Plans",
-
-                        style: TextStyle(
-                          color: Colors.white
-                              .withOpacity(.9),
-
-                          fontSize:
-                          isTablet
-                              ? 16
-                              : 13,
-
-                          fontWeight:
-                          FontWeight.w500,
-                        ),
-                      ),
-
-                      SizedBox(
-                        height:
-                        isTablet
-                            ? 16
-                            : 10,
-                      ),
-
-                      Text(
-                        "${plans.length}",
-
-                        style: TextStyle(
-                          color: Colors.white,
-
-                          fontSize:
-                          isTablet
-                              ? 42
-                              : 34,
-
-                          fontWeight:
-                          FontWeight.w700,
-                        ),
-                      ),
-
-                      SizedBox(
-                        height:
-                        isTablet
-                            ? 22
-                            : 18,
-                      ),
-
-                      Row(
-                        children: [
-
-                          Expanded(
-                            child: summaryItem(
-                              title: "Plans",
-                              value:
-                              "${plans.length}",
-                            ),
-                          ),
-
-                          Expanded(
-                            child: summaryItem(
-                              title: "Active",
-                              value:
-                              "${plans.where((e) => e["isActive"] == true).length}",
-                            ),
-                          ),
-
-                          Expanded(
-                            child: summaryItem(
-                              title: "Inactive",
-                              value:
-                              "${plans.where((e) => e["isActive"] == false).length}",
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(
-                  height:
-                  isTablet ? 34 : 28,
-                ),
-
-                /// SECTION TITLE
-                Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceBetween,
-
-                  children: [
-
-                    Text(
-                      "All Plans",
-
-                      style: TextStyle(
-                        fontSize:
-                        isTablet
-                            ? 24
-                            : 20,
-
-                        fontWeight:
-                        FontWeight.w700,
-
-                        color: AppColors
-                            .textPrimary,
-                      ),
-                    ),
-
-                    Container(
-                      padding:
-                      const EdgeInsets
-                          .symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-
-                      decoration:
-                      BoxDecoration(
-                        color: AppColors
-                            .primary
-                            .withOpacity(.08),
-
-                        borderRadius:
-                        BorderRadius
-                            .circular(30),
-                      ),
-
-                      child: Text(
-                        "${plans.length} Plans",
-
-                        style:
-                        const TextStyle(
-                          color:
-                          AppColors
-                              .primary,
-
-                          fontWeight:
-                          FontWeight
-                              .w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(
-                  height:
-                  isTablet ? 24 : 18,
-                ),
-
-                /// LOADING
-                if (isLoading)
-                  const Padding(
-                    padding:
-                    EdgeInsets.only(
-                        top: 100),
-                    child: Center(
-                      child:
-                      CircularProgressIndicator(),
-                    ),
-                  ),
-
-                /// NO DATA
-                if (!isLoading &&
-                    plans.isEmpty)
-                  Container(
-
-                    width: double.infinity,
-
-                    padding:
-                    const EdgeInsets.all(
-                        30),
-
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-
-                      borderRadius:
-                      BorderRadius.circular(
-                          28),
-                    ),
-
-                    child: Column(
                       children: [
 
-                        Icon(
-                          Icons
-                              .inventory_2_outlined,
-
-                          size: 80,
-
-                          color: AppColors
-                              .primary
-                              .withOpacity(.5),
-                        ),
-
-                        const SizedBox(
-                            height: 18),
-
-                        const Text(
-                          "No Plans Found",
+                        Text(
+                          "All Plans",
 
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize:
+                            isTablet
+                                ? 24
+                                : 20,
+
                             fontWeight:
-                            FontWeight
-                                .bold,
+                            FontWeight.w700,
+
+                            color: AppColors
+                                .textPrimary,
                           ),
                         ),
 
-                        const SizedBox(
-                            height: 10),
+                        Container(
+                          padding:
+                          const EdgeInsets
+                              .symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
 
-                        const Text(
-                          "Add your first gym membership plan",
-
-                          textAlign:
-                          TextAlign.center,
-
-                          style: TextStyle(
+                          decoration:
+                          BoxDecoration(
                             color: AppColors
-                                .textSecondary,
+                                .primary
+                                .withOpacity(.08),
+
+                            borderRadius:
+                            BorderRadius
+                                .circular(30),
+                          ),
+
+                          child: Text(
+                            "${plans.length} Plans",
+
+                            style:
+                            const TextStyle(
+                              color:
+                              AppColors
+                                  .primary,
+
+                              fontWeight:
+                              FontWeight
+                                  .w600,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
 
-                /// PLAN LIST
-                if (!isLoading &&
-                    plans.isNotEmpty)
-                  ListView.builder(
+                    SizedBox(
+                      height:
+                      isTablet ? 24 : 18,
+                    ),
 
-                    shrinkWrap: true,
-
-                    physics:
-                    const NeverScrollableScrollPhysics(),
-
-                    itemCount: plans.length,
-
-                    itemBuilder:
-                        (context, index) {
-
-                      final plan =
-                      plans[index];
-
-                      final color =
-                      getCardColor(index);
-
-                      return Container(
-
-                        margin:
-                        const EdgeInsets.only(
-                          bottom: 18,
+                    /// LOADING
+                    if (isLoading)
+                      const Padding(
+                        padding:
+                        EdgeInsets.only(
+                            top: 100),
+                        child: Center(
+                          child:
+                          CircularProgressIndicator(),
                         ),
+                      ),
+
+                    /// NO DATA
+                    if (!isLoading &&
+                        plans.isEmpty)
+                      Container(
+
+                        width: double.infinity,
 
                         padding:
-                        EdgeInsets.all(
-                          isTablet
-                              ? 22
-                              : 18,
-                        ),
+                        const EdgeInsets.all(
+                            30),
 
-                        decoration:
-                        BoxDecoration(
-
-                          color:
-                          Colors.white,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
 
                           borderRadius:
-                          BorderRadius
-                              .circular(
-                              26),
-
-                          border:
-                          Border.all(
-                            color:
-                            const Color(
-                                0xFFF0F0F5),
-                          ),
-
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                              AppColors
-                                  .primary
-                                  .withOpacity(
-                                  .06),
-
-                              blurRadius:
-                              24,
-
-                              offset:
-                              const Offset(
-                                  0,
-                                  10),
-                            ),
-                          ],
+                          BorderRadius.circular(
+                              28),
                         ),
 
-                        child: Row(
+                        child: Column(
                           children: [
 
-                            Container(
-                              width: 6,
+                            Icon(
+                              Icons
+                                  .inventory_2_outlined,
 
-                              height:
-                              isTablet
-                                  ? 120
-                                  : 105,
+                              size: 80,
 
-                              decoration:
-                              BoxDecoration(
-                                color:
-                                color,
+                              color: AppColors
+                                  .primary
+                                  .withOpacity(.5),
+                            ),
 
-                                borderRadius:
-                                BorderRadius.circular(
-                                    20),
+                            const SizedBox(
+                                height: 18),
+
+                            const Text(
+                              "No Plans Found",
+
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight:
+                                FontWeight
+                                    .bold,
                               ),
                             ),
 
-                            SizedBox(
-                              width:
-                              isTablet
-                                  ? 20
-                                  : 16,
+                            const SizedBox(
+                                height: 10),
+
+                            const Text(
+                              "Add your first gym membership plan",
+
+                              textAlign:
+                              TextAlign.center,
+
+                              style: TextStyle(
+                                color: AppColors
+                                    .textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    /// PLAN LIST
+                    if (!isLoading &&
+                        plans.isNotEmpty)
+                      ListView.builder(
+
+                        shrinkWrap: true,
+
+                        physics:
+                        const NeverScrollableScrollPhysics(),
+
+                        itemCount: plans.length,
+
+                        itemBuilder:
+                            (context, index) {
+
+                          final plan =
+                          plans[index];
+
+                          final color =
+                          getCardColor(index);
+
+                          return Container(
+
+                            margin:
+                            const EdgeInsets.only(
+                              bottom: 18,
                             ),
 
-                            Expanded(
-                              child: Column(
+                            padding:
+                            EdgeInsets.all(
+                              isTablet
+                                  ? 22
+                                  : 18,
+                            ),
 
-                                crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start,
+                            decoration:
+                            BoxDecoration(
 
-                                children: [
+                              color:
+                              Colors.white,
 
-                                  Row(
+                              borderRadius:
+                              BorderRadius
+                                  .circular(
+                                  26),
+
+                              border:
+                              Border.all(
+                                color:
+                                const Color(
+                                    0xFFF0F0F5),
+                              ),
+
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                  AppColors
+                                      .primary
+                                      .withOpacity(
+                                      .06),
+
+                                  blurRadius:
+                                  24,
+
+                                  offset:
+                                  const Offset(
+                                      0,
+                                      10),
+                                ),
+                              ],
+                            ),
+
+                            child: Row(
+                              children: [
+
+                                Container(
+                                  width: 6,
+
+                                  height:
+                                  isTablet
+                                      ? 120
+                                      : 105,
+
+                                  decoration:
+                                  BoxDecoration(
+                                    color:
+                                    color,
+
+                                    borderRadius:
+                                    BorderRadius.circular(
+                                        20),
+                                  ),
+                                ),
+
+                                SizedBox(
+                                  width:
+                                  isTablet
+                                      ? 20
+                                      : 16,
+                                ),
+
+                                Expanded(
+                                  child: Column(
+
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment
+                                        .start,
+
                                     children: [
 
-                                      Expanded(
-                                        child:
-                                        Text(
-                                          plan["planName"],
+                                      Row(
+                                        children: [
 
-                                          maxLines:
-                                          1,
-
-                                          overflow:
-                                          TextOverflow
-                                              .ellipsis,
-
-                                          style:
-                                          TextStyle(
-                                            fontSize:
-                                            isTablet
-                                                ? 22
-                                                : 18,
-
-                                            fontWeight:
-                                            FontWeight.bold,
-
-                                            color:
-                                            AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ),
-
-                                      PopupMenuButton(
-
-                                        onSelected:
-                                            (value) {
-
-                                          if (value ==
-                                              "delete") {
-
-                                            confirmDelete(
-                                              plan["_id"],
-                                              plan["planName"],
-                                            );
-                                          }
-
-                                          if (value ==
-                                              "edit") {
-
-                                            Navigator.pushNamed(
-                                              context,
-                                              "/editPlan",
-
-                                              arguments:
-                                              plan,
-                                            );
-                                          }
-                                        },
-
-                                        itemBuilder:
-                                            (context) =>
-                                        [
-
-                                          const PopupMenuItem(
-                                            value:
-                                            "edit",
-
+                                          Expanded(
                                             child:
                                             Text(
-                                              "Edit Plan",
+                                              plan.planName ?? "",
+
+                                              maxLines:
+                                              1,
+
+                                              overflow:
+                                              TextOverflow
+                                                  .ellipsis,
+
+                                              style:
+                                              TextStyle(
+                                                fontSize:
+                                                isTablet
+                                                    ? 22
+                                                    : 18,
+
+                                                fontWeight:
+                                                FontWeight.bold,
+
+                                                color:
+                                                AppColors.textPrimary,
+                                              ),
                                             ),
                                           ),
 
-                                          const PopupMenuItem(
-                                            value:
-                                            "delete",
+                                          PopupMenuButton(
 
-                                            child:
-                                            Text(
-                                              "Delete Plan",
-                                            ),
+                                            onSelected:
+                                                (value) {
+
+                                              if (value ==
+                                                  "delete") {
+
+                                                confirmDelete(
+                                                  plan.id ?? "",
+                                                  plan.planName ?? "",
+                                                );
+                                              }
+
+                                              if (value ==
+                                                  "edit") {
+
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) => AddPlanPage(
+                                                      plan: plan,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
+
+                                            itemBuilder:
+                                                (context) =>
+                                            [
+
+                                              const PopupMenuItem(
+                                                value:
+                                                "edit",
+
+                                                child:
+                                                Text(
+                                                  "Edit Plan",
+                                                ),
+                                              ),
+
+                                              const PopupMenuItem(
+                                                value:
+                                                "delete",
+
+                                                child:
+                                                Text(
+                                                  "Delete Plan",
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
 
-                                  SizedBox(
-                                    height:
-                                    isTablet
-                                        ? 12
-                                        : 8,
-                                  ),
-
-                                  Text(
-                                    "${plan["durationInMonths"]} Month Duration",
-
-                                    style:
-                                    TextStyle(
-                                      fontSize:
-                                      isTablet
-                                          ? 15
-                                          : 13,
-
-                                      color:
-                                      AppColors
-                                          .textSecondary,
-                                    ),
-                                  ),
-
-                                  if (plan["description"] !=
-                                      null)
-                                    Padding(
-                                      padding:
-                                      const EdgeInsets.only(
-                                        top: 8,
+                                      SizedBox(
+                                        height:
+                                        isTablet
+                                            ? 12
+                                            : 8,
                                       ),
 
-                                      child:
                                       Text(
-                                        plan["description"],
-
-                                        maxLines:
-                                        2,
-
-                                        overflow:
-                                        TextOverflow
-                                            .ellipsis,
+                                        "${plan.durationInMonths ?? 0} Month Duration",
 
                                         style:
                                         TextStyle(
                                           fontSize:
                                           isTablet
-                                              ? 14
-                                              : 12,
+                                              ? 15
+                                              : 13,
 
                                           color:
                                           AppColors
                                               .textSecondary,
                                         ),
                                       ),
-                                    ),
 
-                                  SizedBox(
-                                    height:
-                                    isTablet
-                                        ? 16
-                                        : 12,
+                                      if (plan.description !=
+                                          null)
+                                        Padding(
+                                          padding:
+                                          const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+
+                                          child:
+                                          Text(
+                                            plan.description ?? "",
+
+                                            maxLines:
+                                            2,
+
+                                            overflow:
+                                            TextOverflow
+                                                .ellipsis,
+
+                                            style:
+                                            TextStyle(
+                                              fontSize:
+                                              isTablet
+                                                  ? 14
+                                                  : 12,
+
+                                              color:
+                                              AppColors
+                                                  .textSecondary,
+                                            ),
+                                          ),
+                                        ),
+
+                                      SizedBox(
+                                        height:
+                                        isTablet
+                                            ? 16
+                                            : 12,
+                                      ),
+
+                                      Container(
+                                        padding:
+                                        const EdgeInsets
+                                            .symmetric(
+                                          horizontal:
+                                          12,
+                                          vertical: 6,
+                                        ),
+
+                                        decoration:
+                                        BoxDecoration(
+
+                                          color:
+                                          plan.isActive == true
+                                              ? const Color(
+                                              0xFFEAFBF1)
+                                              : const Color(
+                                              0xFFFFF4E5),
+
+                                          borderRadius:
+                                          BorderRadius
+                                              .circular(
+                                              30),
+                                        ),
+
+                                        child: Text(
+
+                                          plan.isActive == true
+                                              ? "Active"
+                                              : "Inactive",
+
+                                          style:
+                                          TextStyle(
+                                            color:
+                                            plan.isActive == true
+                                                ? const Color(
+                                                0xFF22C55E)
+                                                : Colors.orange,
+
+                                            fontWeight:
+                                            FontWeight
+                                                .w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                ),
 
-                                  Container(
-                                    padding:
-                                    const EdgeInsets
-                                        .symmetric(
-                                      horizontal:
-                                      12,
-                                      vertical: 6,
-                                    ),
+                                SizedBox(
+                                  width:
+                                  isTablet
+                                      ? 20
+                                      : 14,
+                                ),
 
-                                    decoration:
-                                    BoxDecoration(
+                                Column(
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment
+                                      .end,
 
-                                      color:
-                                      plan["isActive"]
-                                          ? const Color(
-                                          0xFFEAFBF1)
-                                          : const Color(
-                                          0xFFFFF4E5),
+                                  children: [
 
-                                      borderRadius:
-                                      BorderRadius
-                                          .circular(
-                                          30),
-                                    ),
-
-                                    child: Text(
-
-                                      plan["isActive"]
-                                          ? "Active"
-                                          : "Inactive",
+                                    Text(
+                                      "₹${plan.price ?? 0}",
 
                                       style:
                                       TextStyle(
-                                        color:
-                                        plan["isActive"]
-                                            ? const Color(
-                                            0xFF22C55E)
-                                            : Colors.orange,
+                                        fontSize:
+                                        isTablet
+                                            ? 28
+                                            : 22,
 
                                         fontWeight:
                                         FontWeight
-                                            .w600,
+                                            .w700,
+
+                                        color:
+                                        AppColors
+                                            .textPrimary,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
 
-                            SizedBox(
-                              width:
-                              isTablet
-                                  ? 20
-                                  : 14,
-                            ),
+                                    const SizedBox(
+                                        height: 6),
 
-                            Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .end,
+                                    Text(
+                                      "/ plan",
 
-                              children: [
+                                      style:
+                                      TextStyle(
+                                        fontSize:
+                                        isTablet
+                                            ? 13
+                                            : 11,
 
-                                Text(
-                                  "₹${plan["price"]}",
-
-                                  style:
-                                  TextStyle(
-                                    fontSize:
-                                    isTablet
-                                        ? 28
-                                        : 22,
-
-                                    fontWeight:
-                                    FontWeight
-                                        .w700,
-
-                                    color:
-                                    AppColors
-                                        .textPrimary,
-                                  ),
-                                ),
-
-                                const SizedBox(
-                                    height: 6),
-
-                                Text(
-                                  "/ plan",
-
-                                  style:
-                                  TextStyle(
-                                    fontSize:
-                                    isTablet
-                                        ? 13
-                                        : 11,
-
-                                    color:
-                                    AppColors
-                                        .textSecondary,
-                                  ),
+                                        color:
+                                        AppColors
+                                            .textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          );
+                        },
+                      ),
 
-                const SizedBox(height: 120),
-              ],
+                    const SizedBox(height: 120),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -1047,4 +925,9 @@ class _PlanDetailsPageState
       ],
     );
   }
+
+  void confirmDelete(
+      String id,
+      String name,
+      ) {}
 }

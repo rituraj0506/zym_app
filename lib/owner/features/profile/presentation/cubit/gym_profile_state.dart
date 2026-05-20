@@ -14,7 +14,11 @@ class GymProfileCreateLoading
 class GymProfileFetchingLoading
     extends GymProfileState {}
 
-/// CREATE SUCCESS
+/// UPDATE LOADING
+class GymProfileUpdateLoading
+    extends GymProfileState {}
+
+/// SUCCESS
 class GymProfileSuccess
     extends GymProfileState {
 
@@ -23,8 +27,7 @@ class GymProfileSuccess
   GymProfileSuccess(this.message);
 }
 
-
-/// GET PROFILE SUCCESS
+/// PROFILE DATA SUCCESS
 class GymProfileDataSuccess
     extends GymProfileState {
 

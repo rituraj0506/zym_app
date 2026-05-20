@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zymmanagement/owner/features/plan/presentation/pages/plan_details_page.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
+import '../../../../models/gym_plan_response.dart';
+import '../cubit/plan_cubit.dart';
+import '../cubit/plan_state.dart';
 
 class AddPlanPage extends StatefulWidget {
-  const AddPlanPage({super.key});
+  final GymPlan? plan; // for update we need show data
+
+  const AddPlanPage({super.key, this.plan});
 
   @override
   State<AddPlanPage> createState() => _AddPlanPageState();
 }
 
 class _AddPlanPageState extends State<AddPlanPage> {
+
+  bool get isEdit =>
+      widget.plan != null;
+
   final GlobalKey<FormState> _formKey =
   GlobalKey<FormState>();
 
@@ -27,55 +37,82 @@ class _AddPlanPageState extends State<AddPlanPage> {
 
   bool isLoading = false;
 
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (isEdit) {
+
+      planNameController.text =
+          widget.plan?.planName ?? "";
+
+      durationController.text =
+          widget.plan?.durationInMonths
+              .toString() ??
+              "";
+
+      priceController.text =
+          widget.plan?.price
+              .toString() ??
+              "";
+
+      descriptionController.text =
+          widget.plan?.description ?? "";
+    }
+  }
+
   Future<void> submitPlan() async {
+
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    setState(() {
-      isLoading = true;
-    });
+    if (isEdit) {
 
-    await Future.delayed(
-      const Duration(seconds: 2),
-    );
+      context.read<PlanCubit>().updatePlan(
 
-    final body = {
-      "planName": planNameController.text.trim(),
-      "durationInMonths": int.parse(
-        durationController.text.trim(),
-      ),
-      "price": int.parse(
-        priceController.text.trim(),
-      ),
-      "description":
-      descriptionController.text.trim(),
-    };
+        id: widget.plan?.id ?? "",
 
-    debugPrint(body.toString());
+        planName:
+        planNameController.text.trim(),
 
-    setState(() {
-      isLoading = false;
-    });
+        durationInMonths: int.parse(
+          durationController.text.trim(),
+        ),
 
-    if (!mounted) return;
+        price: int.parse(
+          priceController.text.trim(),
+        ),
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Plan Added Successfully"),
-      ),
-    );
+        description:
+        descriptionController.text.trim(),
+      );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const PlanDetailsPage(),
-      ),
-    );
+    } else {
 
+      context.read<PlanCubit>().createPlan(
+
+        planName:
+        planNameController.text.trim(),
+
+        durationInMonths: int.parse(
+          durationController.text.trim(),
+        ),
+
+        price: int.parse(
+          priceController.text.trim(),
+        ),
+
+        description:
+        descriptionController.text.trim(),
+      );
+    }
   }
+
+
 
   @override
   void dispose() {
@@ -147,6 +184,41 @@ class _AddPlanPageState extends State<AddPlanPage> {
 
     final bool isTablet = width >= 700;
 
+    return BlocConsumer<PlanCubit, PlanState>(
+
+        listener: (context, state) {
+
+          if (state is PlanCreateSuccess) {
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+              ),
+            );
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const PlanDetailsPage(),
+              ),
+            );
+          }
+
+          if (state is PlanCreateError) {
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+              ),
+            );
+          }
+        },
+
+        builder: (context, state) {
+
+          final isLoading =
+          state is PlanCreateLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
 
@@ -156,7 +228,9 @@ class _AddPlanPageState extends State<AddPlanPage> {
         centerTitle: true,
 
         title: Text(
-          "Add Plan",
+          isEdit
+              ? "Edit Plan"
+              : "Add Plan",
           style: TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
@@ -251,7 +325,9 @@ class _AddPlanPageState extends State<AddPlanPage> {
                       ),
 
                       Text(
-                        "Create Gym Membership Plan",
+                        isEdit
+                            ? "Update Gym Membership Plan"
+                            : "Create Gym Membership Plan",
 
                         style: TextStyle(
                           color: Colors.white,
@@ -451,7 +527,9 @@ class _AddPlanPageState extends State<AddPlanPage> {
                       ),
                     )
                         : Text(
-                      "Add Plan",
+                      isEdit
+                          ? "Update Plan"
+                          : "Add Plan",
                       style: TextStyle(
                         fontSize:
                         isTablet
@@ -474,6 +552,8 @@ class _AddPlanPageState extends State<AddPlanPage> {
           ),
         ),
       ),
+    );
+        }
     );
   }
 

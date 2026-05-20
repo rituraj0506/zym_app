@@ -5,6 +5,7 @@ import '../../../../../network/secure_storge.dart';
 import '../../../home/presentation/cubit/owner_dashboard_cubit.dart';
 import '../cubit/gym_profile_cubit.dart';
 import '../cubit/gym_profile_state.dart';
+import 'gym_details_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -471,7 +472,18 @@ class _ProfilePageState
                               title:
                               "Gym Details",
 
-                              onTap: () {},
+                                onTap: () {
+
+                                  Navigator.push(
+                                    context,
+
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                      const GymDetailsPage(),
+                                    ),
+                                  );
+
+                              },
                             ),
 
                             divider(),

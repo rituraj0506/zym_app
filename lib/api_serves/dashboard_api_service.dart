@@ -128,5 +128,38 @@ class DashboardApiService {
  }
 
 
+  /// UPDATE GYM PROFILE
+  static Future<String> updateGymProfile({
+    required FormData formData,
+  }) async {
+    try {
+      final response = await DioClient.dio.put(
+        "/gym-profile/update",
+        data: formData,
+      );
+
+      final data = response.data;
+
+      if ((response.statusCode == 200 ||
+          response.statusCode == 201) &&
+          data["success"] == true) {
+        return data["message"] ??
+            "Gym profile updated successfully";
+      } else {
+        throw Exception(
+          data["message"] ??
+              "Failed to update gym profile",
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data["message"] ??
+            e.message ??
+            "Something went wrong",
+      );
+    }
+  }
+
+
 
 }
