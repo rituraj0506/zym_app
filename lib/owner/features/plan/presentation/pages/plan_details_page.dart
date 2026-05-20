@@ -17,6 +17,8 @@ class PlanDetailsPage extends StatefulWidget {
 class _PlanDetailsPageState
     extends State<PlanDetailsPage> {
 
+  List<GymPlan> plans = [];
+
   @override
   void initState() {
     super.initState();
@@ -48,9 +50,52 @@ class _PlanDetailsPageState
 
       listener: (context, state) {
 
+        /// LOAD DATA
+        if (state is PlanDetailsLoaded) {
+
+          plans = state.plans.data ?? [];
+        }
+
+        /// DISABLE SUCCESS
+        if (state is PlanDisableSuccess) {
+
+          ScaffoldMessenger.of(context)
+              .hideCurrentSnackBar();
+
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+            ),
+          );
+
+          context
+              .read<PlanCubit>()
+              .getAllPlans();
+        }
+
+        /// DISABLE ERROR
+        if (state is PlanDisableError) {
+
+          ScaffoldMessenger.of(context)
+              .hideCurrentSnackBar();
+
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+            ),
+          );
+        }
+
+        /// DETAILS ERROR
         if (state is PlanDetailsError) {
 
-          ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context)
+              .hideCurrentSnackBar();
+
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
             SnackBar(
               content: Text(state.message),
             ),
@@ -63,13 +108,12 @@ class _PlanDetailsPageState
         final isLoading =
         state is PlanDetailsLoading;
 
-        final plans =
-        state is PlanDetailsLoaded
-            ? state.plans.data ?? []
-            : <GymPlan>[];
+        final isActionLoading =
+        state is PlanDisableLoading;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F6FA),
+          backgroundColor:
+          const Color(0xFFF5F6FA),
 
           floatingActionButton:
           FloatingActionButton.extended(
@@ -79,12 +123,22 @@ class _PlanDetailsPageState
 
             elevation: 0,
 
-            onPressed: () {
+            onPressed: () async {
 
-              Navigator.pushNamed(
+              await Navigator.push(
                 context,
-                "/addPlan",
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const AddPlanPage(),
+                ),
               );
+
+              if (mounted) {
+
+                context
+                    .read<PlanCubit>()
+                    .getAllPlans();
+              }
             },
 
             icon: const Icon(
@@ -108,6 +162,7 @@ class _PlanDetailsPageState
               color: AppColors.primary,
 
               onRefresh: () async {
+
                 context
                     .read<PlanCubit>()
                     .getAllPlans();
@@ -119,8 +174,10 @@ class _PlanDetailsPageState
                 const AlwaysScrollableScrollPhysics(),
 
                 padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 28 : 18,
-                  vertical: isTablet ? 24 : 18,
+                  horizontal:
+                  isTablet ? 28 : 18,
+                  vertical:
+                  isTablet ? 24 : 18,
                 ),
 
                 child: Column(
@@ -154,6 +211,7 @@ class _PlanDetailsPageState
                                     .withOpacity(.08),
 
                                 blurRadius: 22,
+
                                 offset:
                                 const Offset(
                                     0, 8),
@@ -176,10 +234,11 @@ class _PlanDetailsPageState
                         ),
 
                         SizedBox(
-                            width:
-                            isTablet
-                                ? 18
-                                : 14),
+                          width:
+                          isTablet
+                              ? 18
+                              : 14,
+                        ),
 
                         Expanded(
                           child: Column(
@@ -253,8 +312,8 @@ class _PlanDetailsPageState
                           begin:
                           Alignment.topLeft,
 
-                          end: Alignment
-                              .bottomRight,
+                          end:
+                          Alignment.bottomRight,
 
                           colors: [
                             Color(0xFF8B5CF6),
@@ -655,22 +714,22 @@ class _PlanDetailsPageState
 
                                           PopupMenuButton(
 
-                                            onSelected:
-                                                (value) {
+                                            onSelected: (value) async {
 
-                                              if (value ==
-                                                  "delete") {
+                                              if (value == "disable") {
 
-                                                confirmDelete(
-                                                  plan.id ?? "",
-                                                  plan.planName ?? "",
-                                                );
+                                                if (plan.isActive == true) {
+
+                                                  confirmDisable(
+                                                    plan.id ?? "",
+                                                    plan.planName ?? "",
+                                                  );
+                                                }
                                               }
 
-                                              if (value ==
-                                                  "edit") {
+                                              if (value == "edit") {
 
-                                                Navigator.push(
+                                                await Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (_) => AddPlanPage(
@@ -678,6 +737,13 @@ class _PlanDetailsPageState
                                                     ),
                                                   ),
                                                 );
+
+                                                if (mounted) {
+
+                                                  context
+                                                      .read<PlanCubit>()
+                                                      .getAllPlans();
+                                                }
                                               }
                                             },
 
@@ -695,13 +761,18 @@ class _PlanDetailsPageState
                                                 ),
                                               ),
 
-                                              const PopupMenuItem(
+                                              PopupMenuItem(
                                                 value:
-                                                "delete",
+                                                "disable",
+
+                                                enabled:
+                                                plan.isActive == true,
 
                                                 child:
                                                 Text(
-                                                  "Delete Plan",
+                                                  plan.isActive == true
+                                                      ? "Disable Plan"
+                                                      : "Already Disabled",
                                                 ),
                                               ),
                                             ],
@@ -873,6 +944,23 @@ class _PlanDetailsPageState
                                             .textSecondary,
                                       ),
                                     ),
+
+                                    if (isActionLoading)
+                                      const Padding(
+                                        padding:
+                                        EdgeInsets.only(
+                                            top: 10),
+                                        child:
+                                        SizedBox(
+                                          height: 18,
+                                          width: 18,
+                                          child:
+                                          CircularProgressIndicator(
+                                            strokeWidth:
+                                            2,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ],
@@ -926,8 +1014,69 @@ class _PlanDetailsPageState
     );
   }
 
-  void confirmDelete(
+  void confirmDisable(
       String id,
       String name,
-      ) {}
+      ) {
+
+    showDialog(
+      context: context,
+
+      builder: (context) {
+
+        return AlertDialog(
+
+          shape: RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(20),
+          ),
+
+          title: const Text(
+            "Disable Plan",
+          ),
+
+          content: Text(
+            "Are you sure you want to disable \"$name\" ?",
+          ),
+
+          actions: [
+
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+
+              child: const Text(
+                "Cancel",
+              ),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+
+                Navigator.pop(context);
+
+                context
+                    .read<PlanCubit>()
+                    .disablePlan(id: id);
+              },
+
+              style:
+              ElevatedButton.styleFrom(
+                backgroundColor:
+                Colors.red,
+              ),
+
+              child: const Text(
+                "Disable",
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

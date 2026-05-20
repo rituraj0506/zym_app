@@ -141,4 +141,43 @@ class PlanApiServices {
   }
 
 
+  /// DISABLE PLAN
+  static Future<String> disablePlan({
+    required String id,
+  }) async {
+
+    try {
+
+      final response =
+      await DioClient.dio.put(
+        "/plans/disable/$id",
+      );
+
+      final data = response.data;
+
+      if ((response.statusCode == 200 ||
+          response.statusCode == 201) &&
+          data["success"] == true) {
+
+        return data["message"] ??
+            "Plan Disabled Successfully";
+
+      } else {
+
+        throw Exception(
+          data["message"] ??
+              "Failed to disable plan",
+        );
+      }
+
+    } on DioException catch (e) {
+
+      throw Exception(
+        e.response?.data["message"] ??
+            e.message ??
+            "Something went wrong",
+      );
+    }
+  }
+
 }

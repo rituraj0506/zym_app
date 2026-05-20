@@ -6,7 +6,9 @@ class PlanCubit extends Cubit<PlanState> {
 
   PlanCubit() : super(PlanInitial());
 
+  /// =========================
   /// CREATE PLAN
+  /// =========================
 
   Future<void> createPlan({
     required String planName,
@@ -27,7 +29,9 @@ class PlanCubit extends Cubit<PlanState> {
         description: description,
       );
 
-      emit(PlanCreateSuccess(message));
+      emit(
+        PlanCreateSuccess(message),
+      );
 
     } catch (e) {
 
@@ -39,7 +43,9 @@ class PlanCubit extends Cubit<PlanState> {
     }
   }
 
+  /// =========================
   /// GET ALL PLANS
+  /// =========================
 
   Future<void> getAllPlans() async {
 
@@ -64,6 +70,9 @@ class PlanCubit extends Cubit<PlanState> {
     }
   }
 
+  /// =========================
+  /// UPDATE PLAN
+  /// =========================
 
   Future<void> updatePlan({
     required String id,
@@ -73,7 +82,7 @@ class PlanCubit extends Cubit<PlanState> {
     required String description,
   }) async {
 
-    emit(PlanCreateLoading());
+    emit(PlanUpdateLoading());
 
     try {
 
@@ -88,17 +97,49 @@ class PlanCubit extends Cubit<PlanState> {
       );
 
       emit(
-        PlanCreateSuccess(message),
+        PlanUpdateSuccess(message),
       );
 
     } catch (e) {
 
       emit(
-        PlanCreateError(
+        PlanUpdateError(
           e.toString(),
         ),
       );
     }
   }
 
+  /// =========================
+  /// DISABLE PLAN
+  /// =========================
+
+  Future<void> disablePlan({
+    required String id,
+  }) async {
+
+    emit(PlanDisableLoading());
+
+    try {
+
+      final message =
+      await PlanApiServices.disablePlan(
+        id: id,
+      );
+
+      emit(
+        PlanDisableSuccess(message),
+      );
+
+      await getAllPlans();
+
+    } catch (e) {
+
+      emit(
+        PlanDisableError(
+          e.toString(),
+        ),
+      );
+    }
+  }
 }
