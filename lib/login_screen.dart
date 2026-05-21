@@ -77,9 +77,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 (route) => false,
           );
         } else {
-          Navigator.pushReplacementNamed(
+          Navigator.pushNamedAndRemoveUntil(
             context,
-            "memberDashboard",
+            "/dashboardContainer",
+                (route) => false,
           );
         }
       } else {

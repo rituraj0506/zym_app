@@ -48,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
       else if (role == "member") {
         Navigator.pushReplacementNamed(
           context,
-          '/memberDashboard',
+          '/dashboardContainer',
         );
       }
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:zymmanagement/user/features/home/presentation/pages/user_home_page.dart';
+import 'package:zymmanagement/user/features/profile/presentation/pages/user_profile_page.dart';
 import 'package:zymmanagement/user/user_bottom_navbar.dart';
 import '../theme/app_colors.dart';
 
@@ -13,8 +15,8 @@ class _DashboardContainerState extends State<DashboardContainer> {
   int selectedIndex = 0;
 
   final List<Widget> screens = [
-    const DummyPage(title: "Home"),
-    const DummyPage(title: "Profile"),
+    const UserHomePage(),
+    const UserProfilePage(),
 
   ];
 

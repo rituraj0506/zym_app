@@ -4,6 +4,8 @@ import 'package:zymmanagement/login_screen.dart';
 import 'package:zymmanagement/owner/dashboard_screen.dart';
 import 'package:zymmanagement/splash_screen.dart';
 import 'package:zymmanagement/theme/app_theme.dart';
+import 'package:zymmanagement/user/dashboard_container.dart';
+import 'package:zymmanagement/user/features/profile/presentation/cubit/user_profile_cubit.dart';
 import 'owner/features/home/presentation/cubit/owner_dashboard_cubit.dart';
 import 'owner/features/home/presentation/pages/owner_dashboard_page.dart';
 import 'owner/features/member/presentation/cubit/member_cubit.dart';
@@ -45,6 +47,10 @@ class MyApp extends StatelessWidget {
           create: (_) => MemberCubit(),
       ),
 
+        BlocProvider(
+          create: (_) => UserProfileCubit(),
+        ),
+
       ],
 
       child: MaterialApp(
@@ -71,6 +77,11 @@ class MyApp extends StatelessWidget {
           '/ownerDashboard':
               (context) =>
               OwnerDashboardPage(),
+
+          // User
+          '/dashboardContainer':
+              (context) =>
+              DashboardContainer(),
         },
       ),
     );
