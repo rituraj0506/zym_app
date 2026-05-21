@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zymmanagement/owner/features/member/presentation/pages/add_member_page.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
 import '../../../plan/presentation/pages/add_plan__page.dart';
 import '../../../plan/presentation/pages/plan_details_page.dart';
@@ -546,11 +547,13 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
 
                             title: "Add Member",
 
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=> AddMemberPage()));
+                            },
                           ),
 
                           quickActionCard(
-                            icon: Icons.description_outlined,
+                            icon: Icons.workspaces,
 
                             title: "Plans",
 
