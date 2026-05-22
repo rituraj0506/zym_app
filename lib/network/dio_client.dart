@@ -105,7 +105,74 @@ class DioClient {
                 "${error.response?.data}",
           );
 
-          return handler.next(error);
+          String errorMessage =
+              "Something went wrong";
+
+          /// INTERNET ERROR
+          if (error.type ==
+              DioExceptionType
+                  .connectionError) {
+
+            errorMessage =
+            "No internet connection";
+          }
+
+          /// TIMEOUT
+          else if (error.type ==
+              DioExceptionType
+                  .connectionTimeout ||
+
+              error.type ==
+                  DioExceptionType
+                      .receiveTimeout ||
+
+              error.type ==
+                  DioExceptionType
+                      .sendTimeout) {
+
+            errorMessage =
+            "Server timeout";
+          }
+
+          /// SERVER ERROR
+          else if (error.response
+              ?.statusCode ==
+              500) {
+
+            errorMessage =
+            "Server error";
+          }
+
+          /// UNAUTHORIZED
+          else if (error.response
+              ?.statusCode ==
+              401) {
+
+            errorMessage =
+            "Session expired";
+          }
+
+          /// CUSTOM BACKEND MESSAGE
+          else if (error.response
+              ?.data !=
+              null &&
+              error.response!
+                  .data["message"] !=
+                  null) {
+
+            errorMessage =
+            error.response!
+                .data["message"];
+          }
+
+          return handler.reject(
+            DioException(
+              requestOptions:
+              error.requestOptions,
+
+              error: errorMessage,
+            ),
+          );
         },
       ),
     );
