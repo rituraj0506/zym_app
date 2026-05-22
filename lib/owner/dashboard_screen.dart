@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:zymmanagement/owner/features/attendance/presentation/pages/attendance_details_page.dart';
 import 'package:zymmanagement/owner/features/member/presentation/pages/member_details_page.dart';
 import 'package:zymmanagement/owner/features/profile/presentation/pages/profile_page.dart';
+import 'package:zymmanagement/owner/features/qr/presentation/pages/qr_scanner_page.dart';
 
 import '../theme/app_colors.dart';
 import 'custom_bottom_navbar.dart';
@@ -20,8 +22,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> screens = [
     const OwnerDashboardPage(),
     const MemberDetailsPage(),
-    const DummyPage(title: "QR Scanner"),
-    const DummyPage(title: "Attendance"),
+    const QrScannerPage(),
+    const  AttendanceDetailsPage(),
     const ProfilePage(),
   ];
 

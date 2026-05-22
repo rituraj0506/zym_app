@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zymmanagement/login_screen.dart';
 import 'package:zymmanagement/owner/dashboard_screen.dart';
+import 'package:zymmanagement/owner/features/qr/presentation/cubit/scan_qr_cubit.dart';
 import 'package:zymmanagement/splash_screen.dart';
 import 'package:zymmanagement/theme/app_theme.dart';
 import 'package:zymmanagement/user/dashboard_container.dart';
@@ -49,6 +50,10 @@ class MyApp extends StatelessWidget {
 
         BlocProvider(
           create: (_) => UserProfileCubit(),
+        ),
+
+        BlocProvider(
+          create: (_) => ScanQrCubit(),
         ),
 
       ],
