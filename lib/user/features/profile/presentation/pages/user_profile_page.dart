@@ -160,7 +160,7 @@ class _UserProfilePageState
               ).format(
                 DateTime.parse(
                   profile!.lastAttendanceDate!,
-                ),
+                ).toLocal(),
               );
 
               return RefreshIndicator(
@@ -878,19 +878,38 @@ class _UserProfilePageState
 
                                     child: Center(
                                       child:
+                                      // QrImageView(
+                                      //   data:
+                                      //   profile?.qrToken ??
+                                      //       "",
+                                      //
+                                      //   version:
+                                      //   QrVersions
+                                      //       .auto,
+                                      //
+                                      //   backgroundColor:
+                                      //   Colors
+                                      //       .white,
+                                      // ),
+
                                       QrImageView(
-                                        data:
-                                        profile?.qrToken ??
-                                            "",
+                                        data: profile?.qrToken ?? "",
 
-                                        version:
-                                        QrVersions
-                                            .auto,
+                                        version: QrVersions.auto,
 
-                                        backgroundColor:
-                                        Colors
-                                            .white,
-                                      ),
+                                        backgroundColor: Colors.white,
+
+                                        eyeStyle: const QrEyeStyle(
+                                          eyeShape: QrEyeShape.square,
+                                          color: Color(0xFF111827),
+                                        ),
+
+                                        dataModuleStyle: const QrDataModuleStyle(
+                                          dataModuleShape: QrDataModuleShape.square,
+                                          color: Color(0xFF111827),
+                                        ),
+                                      )
+
                                     ),
                                   ),
                                 ],

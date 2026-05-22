@@ -1,9 +1,9 @@
-import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-class ScanSuccessPage
-    extends StatefulWidget {
+class ScanSuccessPage extends StatefulWidget {
+
   final String type;
 
   final String memberName;
@@ -42,15 +42,37 @@ class ScanSuccessPage
 }
 
 class _ScanSuccessPageState
-    extends State<ScanSuccessPage> {
+    extends State<ScanSuccessPage>
+    with SingleTickerProviderStateMixin {
+
+  late AnimationController _controller;
+
+  late Animation<double> scaleAnimation;
+
   @override
   void initState() {
     super.initState();
 
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 700,
+      ),
+    );
+
+    scaleAnimation =
+        CurvedAnimation(
+          parent: _controller,
+          curve: Curves.elasticOut,
+        );
+
+    _controller.forward();
+
     /// AUTO CLOSE
     Future.delayed(
-      const Duration(seconds: 2),
+      const Duration(seconds: 5),
           () {
+
         if (mounted) {
           Navigator.pop(context);
         }
@@ -59,294 +81,297 @@ class _ScanSuccessPageState
   }
 
   @override
+  void dispose() {
+
+    _controller.dispose();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+
     final size =
         MediaQuery.of(context).size;
 
     final bool isTablet =
         size.width > 700;
 
-    final bool isCheckOut =
+    final bool isCheckout =
         widget.type == "check-out";
 
     final Color primaryColor =
-    isCheckOut
+    isCheckout
         ? const Color(0xFFFF8A00)
-        : const Color(0xFF21C16B);
+        : const Color(0xFF22C55E);
 
     return Scaffold(
       backgroundColor:
-      const Color(0xFF070B16),
+      Colors.black.withOpacity(.45),
 
-      body: SafeArea(
+      body: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: 12,
+          sigmaY: 12,
+        ),
+
         child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
+          child: ScaleTransition(
+            scale: scaleAnimation,
+
+            child: Container(
+              width:
+              isTablet
+                  ? 480
+                  : size.width * .88,
+
               padding:
-              EdgeInsets.symmetric(
-                horizontal:
-                isTablet
-                    ? 40
-                    : 22,
+              EdgeInsets.all(
+                isTablet ? 34 : 24,
               ),
 
-              child: Container(
-                width:
-                isTablet ? 520 : null,
+              decoration: BoxDecoration(
+                borderRadius:
+                BorderRadius.circular(36),
 
-                padding:
-                EdgeInsets.all(
-                  isTablet
-                      ? 36
-                      : 26,
-                ),
-
-                decoration: BoxDecoration(
-                  color: const Color(
-                    0xFF12192D,
-                  ),
-
-                  borderRadius:
-                  BorderRadius.circular(
-                    36,
-                  ),
-
-                  border: Border.all(
-                    color: primaryColor
-                        .withOpacity(.25),
-                  ),
-
-                  boxShadow: [
-                    BoxShadow(
-                      color: primaryColor
-                          .withOpacity(.18),
-
-                      blurRadius: 30,
-                    ),
+                gradient:
+                const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end:
+                  Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF1A1F38),
+                    Color(0xFF101426),
                   ],
                 ),
 
-                child: Column(
-                  children: [
-                    /// ICON
-                    Container(
-                      height:
-                      isTablet
-                          ? 140
-                          : 120,
+                border: Border.all(
+                  color: Colors.white
+                      .withOpacity(.08),
+                ),
 
-                      width:
-                      isTablet
-                          ? 140
-                          : 120,
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor
+                        .withOpacity(.30),
 
-                      decoration: BoxDecoration(
-                        shape:
-                        BoxShape.circle,
+                    blurRadius: 35,
 
-                        color: primaryColor
-                            .withOpacity(
-                          .15,
-                        ),
-                      ),
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
 
-                      child: Icon(
-                        Icons
-                            .check_rounded,
+              child: Column(
+                mainAxisSize:
+                MainAxisSize.min,
 
-                        color:
-                        primaryColor,
+                children: [
 
-                        size:
-                        isTablet
-                            ? 80
-                            : 65,
-                      ),
-                    ),
+                  /// GLOW ICON
+                  Container(
+                    height:
+                    isTablet ? 140 : 120,
 
-                    SizedBox(
-                      height:
-                      isTablet
-                          ? 28
-                          : 22,
-                    ),
+                    width:
+                    isTablet ? 140 : 120,
 
-                    Text(
-                      widget.memberName,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
 
-                      textAlign:
-                      TextAlign.center,
+                      gradient:
+                      RadialGradient(
+                        colors: [
+                          primaryColor
+                              .withOpacity(.35),
 
-                      style: TextStyle(
-                        color:
-                        Colors.white,
-
-                        fontSize:
-                        isTablet
-                            ? 34
-                            : 28,
-
-                        fontWeight:
-                        FontWeight
-                            .w700,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 10,
-                    ),
-
-                    Text(
-                      isCheckOut
-                          ? "Check-out Successful"
-                          : "Check-in Successful",
-
-                      style: TextStyle(
-                        color:
-                        primaryColor,
-
-                        fontSize:
-                        isTablet
-                            ? 24
-                            : 20,
-
-                        fontWeight:
-                        FontWeight
-                            .w700,
-                      ),
-                    ),
-
-                    SizedBox(
-                      height:
-                      isTablet
-                          ? 34
-                          : 26,
-                    ),
-
-                    /// DETAILS CARD
-                    Container(
-                      width:
-                      double.infinity,
-
-                      padding:
-                      const EdgeInsets.all(
-                        22,
-                      ),
-
-                      decoration: BoxDecoration(
-                        color: Colors.white
-                            .withOpacity(
-                          .04,
-                        ),
-
-                        borderRadius:
-                        BorderRadius.circular(
-                          24,
-                        ),
-
-                        border: Border.all(
-                          color: Colors
-                              .white
-                              .withOpacity(
-                            .06,
-                          ),
-                        ),
-                      ),
-
-                      child: Column(
-                        children: [
-                          _detailRow(
-                            title:
-                            "Check-in Time",
-
-                            value:
-                            widget
-                                .checkInTime,
-                          ),
-
-                          if (widget
-                              .checkOutTime !=
-                              null) ...[
-                            const SizedBox(
-                              height: 16,
-                            ),
-
-                            _detailRow(
-                              title:
-                              "Check-out Time",
-
-                              value:
-                              widget
-                                  .checkOutTime!,
-                            ),
-                          ],
-
-                          const SizedBox(
-                            height: 16,
-                          ),
-
-                          _detailRow(
-                            title: "Date",
-
-                            value:
-                            widget
-                                .attendanceDate,
-                          ),
+                          primaryColor
+                              .withOpacity(.08),
                         ],
                       ),
                     ),
 
-                    SizedBox(
-                      height:
-                      isTablet
-                          ? 40
-                          : 30,
+                    child: Icon(
+                      isCheckout
+                          ? Icons.logout_rounded
+                          : Icons.check_circle_rounded,
+
+                      color: primaryColor,
+
+                      size:
+                      isTablet ? 72 : 60,
                     ),
+                  ),
 
-                    /// LOADER
-                    SizedBox(
-                      width:
-                      double.infinity,
+                  SizedBox(
+                    height:
+                    isTablet ? 28 : 22,
+                  ),
 
-                      child:
-                      LinearProgressIndicator(
-                        minHeight: 6,
+                  /// TITLE
+                  Text(
+                    isCheckout
+                        ? "CHECK OUT"
+                        : "CHECK IN",
 
-                        borderRadius:
-                        BorderRadius.circular(
-                          30,
-                        ),
+                    style: TextStyle(
+                      color: primaryColor,
 
-                        color:
-                        primaryColor,
+                      fontSize:
+                      isTablet ? 16 : 13,
 
-                        backgroundColor:
-                        Colors.white
-                            .withOpacity(
-                          .08,
-                        ),
+                      letterSpacing: 3,
+
+                      fontWeight:
+                      FontWeight.w700,
+                    ),
+                  ),
+
+                  SizedBox(height: 12),
+
+                  /// NAME
+                  Text(
+                    widget.memberName,
+
+                    textAlign:
+                    TextAlign.center,
+
+                    style: TextStyle(
+                      color: Colors.white,
+
+                      fontSize:
+                      isTablet ? 32 : 26,
+
+                      fontWeight:
+                      FontWeight.w800,
+                    ),
+                  ),
+
+                  SizedBox(height: 12),
+
+                  /// MESSAGE
+                  Text(
+                    widget.message,
+
+                    textAlign:
+                    TextAlign.center,
+
+                    style: TextStyle(
+                      color: Colors.white70,
+
+                      fontSize:
+                      isTablet ? 17 : 14,
+                    ),
+                  ),
+
+                  SizedBox(
+                    height:
+                    isTablet ? 28 : 24,
+                  ),
+
+                  /// DETAILS CARD
+                  Container(
+                    width: double.infinity,
+
+                    padding:
+                    const EdgeInsets.all(20),
+
+                    decoration: BoxDecoration(
+                      color: Colors.white
+                          .withOpacity(.04),
+
+                      borderRadius:
+                      BorderRadius.circular(24),
+
+                      border: Border.all(
+                        color: Colors.white
+                            .withOpacity(.05),
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 18,
+                    child: Column(
+                      children: [
+
+                        _detailTile(
+                          icon:
+                          Icons.access_time,
+
+                          title:
+                          "Check-in Time",
+
+                          value:
+                          widget.checkInTime,
+                        ),
+
+                        if (widget.checkOutTime !=
+                            null) ...[
+
+                          const SizedBox(height: 18),
+
+                          _detailTile(
+                            icon:
+                            Icons.logout_rounded,
+
+                            title:
+                            "Check-out Time",
+
+                            value:
+                            widget
+                                .checkOutTime!,
+                          ),
+                        ],
+
+                        const SizedBox(height: 18),
+
+                        _detailTile(
+                          icon:
+                          Icons.calendar_month,
+
+                          title: "Date",
+
+                          value:
+                          widget
+                              .attendanceDate,
+                        ),
+                      ],
                     ),
+                  ),
 
-                    Text(
-                      "Redirecting to scanner...",
+                  SizedBox(
+                    height:
+                    isTablet ? 28 : 24,
+                  ),
 
-                      style: TextStyle(
-                        color:
-                        Colors.white70,
+                  /// LOADER
+                  ClipRRect(
+                    borderRadius:
+                    BorderRadius.circular(30),
 
-                        fontSize:
-                        isTablet
-                            ? 16
-                            : 13,
-                      ),
+                    child:
+                    LinearProgressIndicator(
+                      minHeight: 6,
+
+                      color: primaryColor,
+
+                      backgroundColor:
+                      Colors.white
+                          .withOpacity(.06),
                     ),
-                  ],
-                ),
+                  ),
+
+                  SizedBox(height: 16),
+
+                  Text(
+                    "Redirecting to scanner...",
+
+                    style: TextStyle(
+                      color: Colors.white54,
+
+                      fontSize:
+                      isTablet ? 15 : 12,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -355,35 +380,71 @@ class _ScanSuccessPageState
     );
   }
 
-  Widget _detailRow({
+  Widget _detailTile({
+
+    required IconData icon,
+
     required String title,
+
     required String value,
   }) {
+
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            title,
 
-            style: TextStyle(
-              color: Colors.white
-                  .withOpacity(.65),
+        Container(
+          height: 44,
+          width: 44,
 
-              fontSize: 15,
-            ),
+          decoration: BoxDecoration(
+            color: Colors.white
+                .withOpacity(.05),
+
+            borderRadius:
+            BorderRadius.circular(14),
+          ),
+
+          child: Icon(
+            icon,
+            color: Colors.white70,
+            size: 22,
           ),
         ),
 
-        Text(
-          value,
+        const SizedBox(width: 14),
 
-          style: const TextStyle(
-            color: Colors.white,
+        Expanded(
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
 
-            fontSize: 15,
+            children: [
 
-            fontWeight:
-            FontWeight.w700,
+              Text(
+                title,
+
+                style: TextStyle(
+                  color: Colors.white54,
+
+                  fontSize: 12,
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              Text(
+                value,
+
+                style: const TextStyle(
+                  color: Colors.white,
+
+                  fontSize: 15,
+
+                  fontWeight:
+                  FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ],

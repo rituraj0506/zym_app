@@ -4,13 +4,16 @@ import 'scan_qr_state.dart';
 
 class ScanQrCubit
     extends Cubit<ScanQrState> {
+
   ScanQrCubit()
       : super(ScanQrInitial());
 
   Future<void> checkInCheckOut({
     required String qrToken,
   }) async {
+
     try {
+
       emit(ScanQrLoading());
 
       final response =
@@ -54,9 +57,28 @@ class ScanQrCubit
           member["profilePhoto"],
         ),
       );
+
     } catch (e) {
+
+      String errorMessage =
+      e.toString();
+
+      /// REMOVE "Exception:"
+      if (errorMessage.startsWith(
+        "Exception:",
+      )) {
+
+        errorMessage =
+            errorMessage.replaceFirst(
+              "Exception:",
+              "",
+            ).trim();
+      }
+
       emit(
-        ScanQrError(e.toString()),
+        ScanQrError(
+          errorMessage,
+        ),
       );
     }
   }

@@ -1,13 +1,12 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:zymmanagement/owner/features/qr/presentation/pages/sucess_scan_page.dart';
 import '../cubit/scan_qr_cubit.dart';
 import '../cubit/scan_qr_state.dart';
+import 'sucess_scan_page.dart';
 
 class QrScannerPage extends StatefulWidget {
   const QrScannerPage({super.key});
@@ -19,7 +18,10 @@ class QrScannerPage extends StatefulWidget {
 
 class _QrScannerPageState
     extends State<QrScannerPage>
-    with SingleTickerProviderStateMixin {
+    with
+        SingleTickerProviderStateMixin,
+        WidgetsBindingObserver {
+
   late AnimationController
   _animationController;
 
@@ -32,7 +34,7 @@ class _QrScannerPageState
     detectionSpeed:
     DetectionSpeed.noDuplicates,
 
-    detectionTimeoutMs: 1200,
+    detectionTimeoutMs: 1500,
 
     facing: CameraFacing.back,
 
@@ -45,9 +47,17 @@ class _QrScannerPageState
 
   bool isProcessing = false;
 
+  /// QR COOLDOWN
+  String? lastScannedQr;
+
+  DateTime? lastScanTime;
+
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance
+        .addObserver(this);
 
     _animationController =
     AnimationController(
@@ -60,7 +70,26 @@ class _QrScannerPageState
     _initTts();
   }
 
+  /// APP LIFECYCLE
+  @override
+  void didChangeAppLifecycleState(
+      AppLifecycleState state) async {
+
+    if (state ==
+        AppLifecycleState.paused) {
+
+      await scannerController.stop();
+    }
+
+    if (state ==
+        AppLifecycleState.resumed) {
+
+      await scannerController.start();
+    }
+  }
+
   Future<void> _initTts() async {
+
     await flutterTts.setLanguage(
       "en-US",
     );
@@ -70,10 +99,16 @@ class _QrScannerPageState
     );
 
     await flutterTts.setPitch(1.0);
+
+    await flutterTts.setVolume(1.0);
   }
 
   @override
   void dispose() {
+
+    WidgetsBinding.instance
+        .removeObserver(this);
+
     _animationController.dispose();
 
     scannerController.dispose();
@@ -86,6 +121,8 @@ class _QrScannerPageState
   Future<void> _onDetectBarcode(
       BarcodeCapture capture,
       ) async {
+
+    /// ALREADY PROCESSING
     if (isProcessing) return;
 
     final List<Barcode> barcodes =
@@ -96,16 +133,42 @@ class _QrScannerPageState
     final String? rawValue =
         barcodes.first.rawValue;
 
-    if (rawValue == null) return;
+    if (rawValue == null ||
+        rawValue.isEmpty) {
+      return;
+    }
+
+    /// SAME QR COOLDOWN
+    if (lastScannedQr == rawValue &&
+        lastScanTime != null) {
+
+      final difference =
+      DateTime.now().difference(
+        lastScanTime!,
+      );
+
+      /// BLOCK SAME QR FOR 30 SEC
+      if (difference.inSeconds < 30) {
+        return;
+      }
+    }
+
+    /// SAVE LAST QR
+    lastScannedQr = rawValue;
+
+    lastScanTime = DateTime.now();
 
     isProcessing = true;
 
     /// STOP CAMERA
     await scannerController.stop();
 
+    /// CLICK SOUND
     SystemSound.play(
       SystemSoundType.click,
     );
+
+    if (!mounted) return;
 
     /// HIT API
     context
@@ -117,6 +180,7 @@ class _QrScannerPageState
 
   @override
   Widget build(BuildContext context) {
+
     final size =
         MediaQuery.of(context).size;
 
@@ -134,61 +198,88 @@ class _QrScannerPageState
 
       body: BlocConsumer<
           ScanQrCubit,
-          ScanQrState
-      >(
+          ScanQrState>(
         listener: (
             context,
             state,
             ) async {
+
           /// SUCCESS
           if (state
           is ScanQrSuccess) {
-            await flutterTts.speak(
-              state.voiceText,
-            );
+
+            try {
+
+              await flutterTts.speak(
+                state.voiceText,
+              );
+
+            } catch (_) {}
 
             if (!mounted) return;
 
             await Navigator.push(
               context,
 
-              MaterialPageRoute(
-                builder:
-                    (_) =>
-                    ScanSuccessPage(
-                      type:
-                      state.type,
+              PageRouteBuilder(
+                opaque: false,
 
-                      memberName:
-                      state
-                          .memberName,
+                transitionDuration:
+                const Duration(
+                  milliseconds: 400,
+                ),
 
-                      message:
-                      state
-                          .message,
+                pageBuilder:
+                    (
+                    context,
+                    animation,
+                    secondaryAnimation,
+                    ) =>
+                    FadeTransition(
+                      opacity: animation,
 
-                      checkInTime:
-                      state
-                          .checkInTime,
+                      child:
+                      ScanSuccessPage(
+                        type:
+                        state.type,
 
-                      checkOutTime:
-                      state
-                          .checkOutTime,
+                        memberName:
+                        state
+                            .memberName,
 
-                      attendanceDate:
-                      state
-                          .attendanceDate,
+                        message:
+                        state
+                            .message,
 
-                      profilePhoto:
-                      state
-                          .profilePhoto,
+                        checkInTime:
+                        state
+                            .checkInTime,
+
+                        checkOutTime:
+                        state
+                            .checkOutTime,
+
+                        attendanceDate:
+                        state
+                            .attendanceDate,
+
+                        profilePhoto:
+                        state
+                            .profilePhoto,
+                      ),
                     ),
               ),
             );
 
+            /// SMALL DELAY
+            await Future.delayed(
+              const Duration(
+                milliseconds: 700,
+              ),
+            );
+
             /// RESTART CAMERA
-            await scannerController
-                .start();
+            await scannerController.start();
 
             isProcessing = false;
           }
@@ -196,16 +287,50 @@ class _QrScannerPageState
           /// ERROR
           if (state
           is ScanQrError) {
+
+            if (!mounted) return;
+
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(
               SnackBar(
+                behavior:
+                SnackBarBehavior
+                    .floating,
+
+                backgroundColor:
+                const Color(
+                  0xFF1A1F38,
+                ),
+
+                shape:
+                RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(
+                    16,
+                  ),
+                ),
+
                 content: Text(
                   state.message,
+
+                  style:
+                  const TextStyle(
+                    color:
+                    Colors.white,
+                  ),
                 ),
               ),
             );
 
+            /// ERROR DELAY
+            await Future.delayed(
+              const Duration(
+                seconds: 2,
+              ),
+            );
+
+            /// RESTART CAMERA
             await scannerController
                 .start();
 
@@ -217,18 +342,24 @@ class _QrScannerPageState
             context,
             state,
             ) {
+
           return Stack(
             children: [
-              /// CAMERA
-              MobileScanner(
-                controller:
-                scannerController,
 
-                onDetect:
-                _onDetectBarcode,
+              /// CAMERA
+              RepaintBoundary(
+                child: MobileScanner(
+                  controller:
+                  scannerController,
+
+                  fit: BoxFit.cover,
+
+                  onDetect:
+                  _onDetectBarcode,
+                ),
               ),
 
-              /// DARK OVERLAY
+              /// OVERLAY
               Container(
                 color: Colors.black
                     .withOpacity(.55),
@@ -236,19 +367,38 @@ class _QrScannerPageState
 
               /// TOP GLOW
               Positioned(
-                top: -100,
+                top: -120,
                 right: -80,
 
                 child: Container(
-                  height: 240,
-                  width: 240,
+                  height: 260,
+                  width: 260,
 
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
 
                     color: const Color(
                       0xFF7B61FF,
-                    ).withOpacity(.20),
+                    ).withOpacity(.18),
+                  ),
+                ),
+              ),
+
+              /// BOTTOM GLOW
+              Positioned(
+                bottom: -140,
+                left: -100,
+
+                child: Container(
+                  height: 260,
+                  width: 260,
+
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+
+                    color: const Color(
+                      0xFF7B61FF,
+                    ).withOpacity(.12),
                   ),
                 ),
               ),
@@ -278,65 +428,86 @@ class _QrScannerPageState
 
                       child: Column(
                         children: [
-                          /// APP BAR
+
+                          /// TOP BAR
                           Row(
                             children: [
-                              _topButton(
-                                icon:
-                                Icons
-                                    .arrow_back_ios_new_rounded,
-
-                                onTap: () {
-                                  Navigator.pop(
-                                    context,
-                                  );
-                                },
-                              ),
 
                               Expanded(
                                 child: Center(
-                                  child: Text(
-                                    "Scan Member QR",
+                                  child: Column(
+                                    children: [
 
-                                    style: TextStyle(
-                                      color:
-                                      Colors
-                                          .white,
+                                      Text(
+                                        "Gym Scanner",
 
-                                      fontSize:
-                                      isTablet
-                                          ? 28
-                                          : 22,
+                                        style:
+                                        TextStyle(
+                                          color:
+                                          Colors
+                                              .white54,
 
-                                      fontWeight:
-                                      FontWeight
-                                          .w700,
-                                    ),
+                                          fontSize:
+                                          isTablet
+                                              ? 14
+                                              : 11,
+
+                                          letterSpacing:
+                                          2,
+                                        ),
+                                      ),
+
+                                      const SizedBox(
+                                        height:
+                                        4,
+                                      ),
+
+                                      Text(
+                                        "Scan Member QR",
+
+                                        style:
+                                        TextStyle(
+                                          color:
+                                          Colors
+                                              .white,
+
+                                          fontSize:
+                                          isTablet
+                                              ? 28
+                                              : 22,
+
+                                          fontWeight:
+                                          FontWeight
+                                              .w700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
 
                               Row(
                                 children: [
+
+                                  /// FLASH
                                   _topButton(
                                     icon:
                                     isTorchOn
                                         ? Icons
-                                        .flash_on
+                                        .flash_on_rounded
                                         : Icons
-                                        .flash_off,
+                                        .flash_off_rounded,
 
                                     onTap:
                                         () async {
+
                                       await scannerController
                                           .toggleTorch();
 
-                                      setState(
-                                            () {
-                                          isTorchOn =
-                                          !isTorchOn;
-                                        },
-                                      );
+                                      setState(() {
+                                        isTorchOn =
+                                        !isTorchOn;
+                                      });
                                     },
                                   ),
 
@@ -344,6 +515,7 @@ class _QrScannerPageState
                                     width: 10,
                                   ),
 
+                                  /// CAMERA SWITCH
                                   _topButton(
                                     icon:
                                     Icons
@@ -351,15 +523,14 @@ class _QrScannerPageState
 
                                     onTap:
                                         () async {
+
                                       await scannerController
                                           .switchCamera();
 
-                                      setState(
-                                            () {
-                                          isFrontCamera =
-                                          !isFrontCamera;
-                                        },
-                                      );
+                                      setState(() {
+                                        isFrontCamera =
+                                        !isFrontCamera;
+                                      });
                                     },
                                   ),
                                 ],
@@ -372,21 +543,22 @@ class _QrScannerPageState
                           /// SCAN AREA
                           Stack(
                             alignment:
-                            Alignment
-                                .center,
+                            Alignment.center,
 
                             children: [
-                              /// GLOW
+
+                              /// OUTER GLOW
                               Container(
                                 height:
                                 scanSize +
-                                    40,
+                                    50,
 
                                 width:
                                 scanSize +
-                                    40,
+                                    50,
 
-                                decoration: BoxDecoration(
+                                decoration:
+                                BoxDecoration(
                                   borderRadius:
                                   BorderRadius.circular(
                                     40,
@@ -398,7 +570,7 @@ class _QrScannerPageState
                                       const Color(
                                         0xFF7B61FF,
                                       ).withOpacity(
-                                        .22,
+                                        .20,
                                       ),
 
                                       Colors
@@ -408,7 +580,7 @@ class _QrScannerPageState
                                 ),
                               ),
 
-                              /// BOX
+                              /// MAIN BOX
                               Container(
                                 height:
                                 scanSize,
@@ -416,18 +588,22 @@ class _QrScannerPageState
                                 width:
                                 scanSize,
 
-                                decoration: BoxDecoration(
+                                decoration:
+                                BoxDecoration(
                                   borderRadius:
                                   BorderRadius.circular(
                                     32,
                                   ),
 
-                                  border: Border.all(
+                                  border:
+                                  Border.all(
                                     color: Colors
                                         .white
                                         .withOpacity(
-                                      .08,
+                                      .10,
                                     ),
+
+                                    width: 1.5,
                                   ),
                                 ),
                               ),
@@ -442,25 +618,27 @@ class _QrScannerPageState
                                     context,
                                     child,
                                     ) {
+
                                   return Positioned(
                                     top:
                                     (_animationController.value *
                                         (scanSize -
-                                            40)),
+                                            50)),
 
                                     child:
                                     Container(
                                       width:
                                       scanSize *
-                                          .85,
+                                          .82,
 
                                       height:
                                       4,
 
-                                      decoration: BoxDecoration(
+                                      decoration:
+                                      BoxDecoration(
                                         borderRadius:
                                         BorderRadius.circular(
-                                          20,
+                                          30,
                                         ),
 
                                         gradient:
@@ -483,7 +661,7 @@ class _QrScannerPageState
                                             color: const Color(
                                               0xFFB28CFF,
                                             ).withOpacity(
-                                              .9,
+                                              .8,
                                             ),
 
                                             blurRadius:
@@ -506,6 +684,7 @@ class _QrScannerPageState
 
                                 child: Stack(
                                   children: [
+
                                     _corner(
                                       top: 0,
                                       left: 0,
@@ -560,7 +739,7 @@ class _QrScannerPageState
                           ),
 
                           const SizedBox(
-                            height: 8,
+                            height: 10,
                           ),
 
                           Text(
@@ -582,6 +761,75 @@ class _QrScannerPageState
                           ),
 
                           const Spacer(),
+
+                          if (state
+                          is ScanQrLoading)
+
+                            Container(
+                              padding:
+                              const EdgeInsets.symmetric(
+                                horizontal:
+                                20,
+
+                                vertical: 14,
+                              ),
+
+                              decoration:
+                              BoxDecoration(
+                                color: Colors
+                                    .white
+                                    .withOpacity(
+                                  .08,
+                                ),
+
+                                borderRadius:
+                                BorderRadius.circular(
+                                  20,
+                                ),
+                              ),
+
+                              child: const Row(
+                                mainAxisSize:
+                                MainAxisSize.min,
+
+                                children: [
+
+                                  SizedBox(
+                                    height:
+                                    18,
+
+                                    width:
+                                    18,
+
+                                    child:
+                                    CircularProgressIndicator(
+                                      strokeWidth:
+                                      2,
+
+                                      color:
+                                      Color(
+                                        0xFFB28CFF,
+                                      ),
+                                    ),
+                                  ),
+
+                                  SizedBox(
+                                    width: 14,
+                                  ),
+
+                                  Text(
+                                    "Processing Attendance...",
+
+                                    style:
+                                    TextStyle(
+                                      color:
+                                      Colors
+                                          .white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -599,6 +847,7 @@ class _QrScannerPageState
     required IconData icon,
     required VoidCallback onTap,
   }) {
+
     return GestureDetector(
       onTap: onTap,
 
@@ -635,6 +884,7 @@ class _QrScannerPageState
     double? left,
     double? right,
   }) {
+
     return Positioned(
       top: top,
       bottom: bottom,
@@ -642,8 +892,8 @@ class _QrScannerPageState
       right: right,
 
       child: Container(
-        height: 46,
-        width: 46,
+        height: 48,
+        width: 48,
 
         decoration: BoxDecoration(
           borderRadius:
