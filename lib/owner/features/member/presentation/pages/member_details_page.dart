@@ -337,7 +337,7 @@ class _MemberDetailsPageState
                               return member
                                   .memberStatus
                                   ?.toLowerCase() ==
-                                  "inactive";
+                                  "expired";
                             }
 
                             return true;
@@ -594,9 +594,39 @@ class _MemberDetailsPageState
     required bool isTablet,
   }) {
 
-    final bool active =
-        status.toLowerCase() ==
-            "active";
+    /// NORMALIZED STATUS
+    final String normalizedStatus =
+    status.trim().toLowerCase();
+
+    /// STATUS COLORS
+    Color statusColor;
+    Color bgColor;
+
+    switch (normalizedStatus) {
+
+      case "active":
+        statusColor = Colors.green;
+        bgColor =
+            Colors.green.withOpacity(.1);
+        break;
+
+      case "expired":
+        statusColor = Colors.orange;
+        bgColor =
+            Colors.orange.withOpacity(.1);
+        break;
+
+      case "inactive":
+        statusColor = Colors.red;
+        bgColor =
+            Colors.red.withOpacity(.1);
+        break;
+
+      default:
+        statusColor = Colors.grey;
+        bgColor =
+            Colors.grey.withOpacity(.1);
+    }
 
     /// SAFE IMAGE CHECK
     final bool hasImage =
@@ -641,7 +671,6 @@ class _MemberDetailsPageState
             )
                 : null,
 
-            /// NULL SAFE
             onBackgroundImageError:
             hasImage
                 ? (_, __) {}
@@ -721,16 +750,7 @@ class _MemberDetailsPageState
             decoration:
             BoxDecoration(
 
-              color:
-              active
-                  ? Colors.green
-                  .withOpacity(
-                .1,
-              )
-                  : Colors.red
-                  .withOpacity(
-                .1,
-              ),
+              color: bgColor,
 
               borderRadius:
               BorderRadius
@@ -740,16 +760,13 @@ class _MemberDetailsPageState
             ),
 
             child: Text(
-              active
-                  ? "Active"
-                  : "Inactive",
+
+              status,
 
               style: TextStyle(
+
                 color:
-                active
-                    ? Colors
-                    .green
-                    : Colors.red,
+                statusColor,
 
                 fontWeight:
                 FontWeight

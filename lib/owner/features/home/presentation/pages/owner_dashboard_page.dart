@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zymmanagement/owner/features/expiredplan/presentation/pages/expired_plan_details.dart';
 import 'package:zymmanagement/owner/features/member/presentation/pages/add_member_page.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
 import '../../../plan/presentation/pages/add_plan__page.dart';
@@ -573,7 +574,15 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
 
                             title: "Members",
 
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+
+                                MaterialPageRoute(
+                                  builder: (_) => const ExpiredMemberDetails(),
+                                ),
+                              );
+                            },
                           ),
 
 
