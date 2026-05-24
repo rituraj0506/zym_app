@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
+
 import '../../../../../theme/app_colors.dart';
+
 import '../cubit/member_cubit.dart';
 import '../cubit/member_state.dart';
 
+import '../cubit/active_member_cubit.dart';
+import '../cubit/active_member_state.dart';
+
+import '../cubit/inactive_member_cubit.dart';
+import '../cubit/inactive_member_state.dart';
+
 class MemberDetailsPage extends StatefulWidget {
-  const MemberDetailsPage({super.key});
+  const MemberDetailsPage({
+    super.key,
+  });
 
   @override
   State<MemberDetailsPage> createState() =>
@@ -34,31 +44,54 @@ class _MemberDetailsPageState
           .getAllMembers();
     });
 
-    scrollController.addListener(() {
+    scrollController.addListener(
+      _paginationListener,
+    );
+  }
 
-      if (!scrollController.hasClients) {
-        return;
+  void _paginationListener() {
+
+    if (!scrollController.hasClients) {
+      return;
+    }
+
+    final maxScroll =
+        scrollController
+            .position
+            .maxScrollExtent;
+
+    final currentScroll =
+        scrollController
+            .position
+            .pixels;
+
+    if (currentScroll >=
+        maxScroll - 200) {
+
+      /// ALL MEMBERS
+      if (selectedTab == 0) {
+
+        context
+            .read<MemberCubit>()
+            .getAllMembers();
       }
 
-      final cubit =
-      context.read<MemberCubit>();
+      /// ACTIVE MEMBERS
+      else if (selectedTab == 1) {
 
-      final maxScroll =
-          scrollController
-              .position
-              .maxScrollExtent;
-
-      final currentScroll =
-          scrollController
-              .position
-              .pixels;
-
-      if (currentScroll >=
-          maxScroll - 200) {
-
-        cubit.getAllMembers();
+        context
+            .read<ActiveMemberCubit>()
+            .getActiveMembers();
       }
-    });
+
+      /// NOT VISITING MEMBERS
+      else {
+
+        context
+            .read<InActiveMemberCubit>()
+            .getINActiveMembers();
+      }
+    }
   }
 
   @override
@@ -84,7 +117,6 @@ class _MemberDetailsPageState
     double h(double value) =>
         size.height * (value / 844);
 
-
     return Scaffold(
 
       backgroundColor:
@@ -107,6 +139,7 @@ class _MemberDetailsPageState
             child: Column(
               crossAxisAlignment:
               CrossAxisAlignment.start,
+
               children: [
 
                 /// TITLE
@@ -124,7 +157,9 @@ class _MemberDetailsPageState
                   ),
                 ),
 
-                SizedBox(height: h(18)),
+                SizedBox(
+                  height: h(18),
+                ),
 
                 /// SEARCH
                 Row(
@@ -175,7 +210,9 @@ class _MemberDetailsPageState
                       ),
                     ),
 
-                    SizedBox(width: w(12)),
+                    SizedBox(
+                      width: w(12),
+                    ),
 
                     Container(
 
@@ -214,7 +251,9 @@ class _MemberDetailsPageState
                   ],
                 ),
 
-                SizedBox(height: h(18)),
+                SizedBox(
+                  height: h(18),
+                ),
 
                 /// TABS
                 Row(
@@ -226,7 +265,9 @@ class _MemberDetailsPageState
                       isTablet: isTablet,
                     ),
 
-                    SizedBox(width: w(10)),
+                    SizedBox(
+                      width: w(10),
+                    ),
 
                     _buildTab(
                       title: "Active",
@@ -234,17 +275,21 @@ class _MemberDetailsPageState
                       isTablet: isTablet,
                     ),
 
-                    SizedBox(width: w(10)),
+                    SizedBox(
+                      width: w(10),
+                    ),
 
                     _buildTab(
-                      title: "Inactive",
+                      title: "Not Visiting",
                       index: 2,
                       isTablet: isTablet,
                     ),
                   ],
                 ),
 
-                SizedBox(height: h(24)),
+                SizedBox(
+                  height: h(24),
+                ),
 
                 /// MEMBER LIST
                 Expanded(
@@ -253,217 +298,41 @@ class _MemberDetailsPageState
 
                     onRefresh: () async {
 
-                      await context
-                          .read<
-                          MemberCubit>()
-                          .refreshMembers();
+                      /// ALL
+                      if (selectedTab == 0) {
+
+                        await context
+                            .read<MemberCubit>()
+                            .refreshMembers();
+                      }
+
+                      /// ACTIVE
+                      else if (selectedTab == 1) {
+
+                        await context
+                            .read<ActiveMemberCubit>()
+                            .getActiveMembers(
+                          isRefresh: true,
+                        );
+                      }
+
+                      /// NOT VISITING
+                      else {
+
+                        await context
+                            .read<
+                            InActiveMemberCubit>()
+                            .getINActiveMembers(
+                          isRefresh: true,
+                        );
+                      }
                     },
 
-                    child: BlocBuilder<
-                        MemberCubit,
-                        MemberState>(
-                      builder:
-                          (context, state) {
-
-                        /// LOADING
-                        if (state
-                        is MemberLoading) {
-
-                          return ListView
-                              .separated(
-
-                            physics:
-                            const BouncingScrollPhysics(),
-
-                            itemCount: 8,
-
-                            separatorBuilder:
-                                (_, __) =>
-                                SizedBox(
-                                  height:
-                                  h(18),
-                                ),
-
-                            itemBuilder:
-                                (
-                                context,
-                                index,
-                                ) {
-
-                              return _skeletonTile(
-                                isTablet:
-                                isTablet,
-                              );
-                            },
-                          );
-                        }
-
-                        /// ERROR
-                        if (state
-                        is MemberError) {
-
-                          return Center(
-                            child: Text(
-                              state
-                                  .message,
-                            ),
-                          );
-                        }
-
-                        /// SUCCESS
-                        if (state
-                        is MemberLoaded) {
-
-                          final members =
-                              state.members;
-
-                          final filteredMembers =
-                          members.where((
-                              member,
-                              ) {
-
-                            if (selectedTab ==
-                                1) {
-
-                              return member
-                                  .memberStatus
-                                  ?.toLowerCase() ==
-                                  "active";
-                            }
-
-                            if (selectedTab ==
-                                2) {
-
-                              return member
-                                  .memberStatus
-                                  ?.toLowerCase() ==
-                                  "expired";
-                            }
-
-                            return true;
-
-                          }).toList();
-
-                          if (filteredMembers
-                              .isEmpty) {
-
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment:
-                                MainAxisAlignment
-                                    .center,
-
-                                children: const [
-
-                                  Icon(
-                                    Icons
-                                        .people_outline,
-
-                                    size: 60,
-
-                                    color:
-                                    Colors
-                                        .grey,
-                                  ),
-
-                                  SizedBox(
-                                    height:
-                                    12,
-                                  ),
-
-                                  Text(
-                                    "No Members Found",
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return ListView
-                              .separated(
-
-                            controller:
-                            scrollController,
-
-                            physics:
-                            const BouncingScrollPhysics(),
-
-                            itemCount:
-                            filteredMembers
-                                .length +
-                                (state
-                                    .isLoadingMore
-                                    ? 1
-                                    : 0),
-
-                            separatorBuilder:
-                                (_, __) =>
-                                SizedBox(
-                                  height:
-                                  h(18),
-                                ),
-
-                            itemBuilder:
-                                (
-                                context,
-                                index,
-                                ) {
-
-                              /// PAGINATION LOADER
-                              if (index ==
-                                  filteredMembers
-                                      .length) {
-
-                                return const Padding(
-                                  padding:
-                                  EdgeInsets.all(
-                                    20,
-                                  ),
-
-                                  child:
-                                  Center(
-                                    child:
-                                    CircularProgressIndicator(),
-                                  ),
-                                );
-                              }
-
-                              final member =
-                              filteredMembers[
-                              index];
-
-                              return _memberTile(
-
-                                name:
-                                member
-                                    .user
-                                    ?.name ??
-                                    "",
-
-                                mobNo:
-                                member.user?.mobNo  ??
-                                    ""
-                                   ,
-
-                                status:
-                                member
-                                    .memberStatus ??
-                                    "",
-
-                                image:
-                                member
-                                    .profilePhoto ??
-                                    "",
-
-                                isTablet:
-                                isTablet,
-                              );
-                            },
-                          );
-                        }
-
-                        return const SizedBox();
-                      },
+                    child:
+                    _buildBody(
+                      isTablet:
+                      isTablet,
+                      h: h,
                     ),
                   ),
                 ),
@@ -474,8 +343,7 @@ class _MemberDetailsPageState
       ),
 
       floatingActionButton:
-      FloatingActionButton
-          .extended(
+      FloatingActionButton.extended(
 
         backgroundColor:
         AppColors.primary,
@@ -501,6 +369,207 @@ class _MemberDetailsPageState
     );
   }
 
+  /// BODY
+  Widget _buildBody({
+    required bool isTablet,
+    required double Function(double) h,
+  }) {
+
+    /// ================= ALL =================
+
+    if (selectedTab == 0) {
+
+      return BlocBuilder<
+          MemberCubit,
+          MemberState>(
+        builder: (
+            context,
+            state,
+            ) {
+
+          /// LOADING
+          if (state
+          is MemberLoading) {
+
+            return _loadingList(
+              isTablet:
+              isTablet,
+              h: h,
+            );
+          }
+
+          /// ERROR
+          if (state
+          is MemberError) {
+
+            return Center(
+              child: Text(
+                state.message,
+              ),
+            );
+          }
+
+          /// SUCCESS
+          if (state
+          is MemberLoaded) {
+
+            return _memberListView(
+              members:
+              state.members,
+
+              isTablet:
+              isTablet,
+
+              isLoadingMore:
+              state.isLoadingMore,
+            );
+          }
+
+          return const SizedBox();
+        },
+      );
+    }
+
+    /// ================= ACTIVE =================
+
+    if (selectedTab == 1) {
+
+      return BlocBuilder<
+          ActiveMemberCubit,
+          ActiveMemberState>(
+        builder: (
+            context,
+            state,
+            ) {
+
+          /// LOADING
+          if (state
+          is ActiveMemberLoading) {
+
+            return _loadingList(
+              isTablet:
+              isTablet,
+              h: h,
+            );
+          }
+
+          /// ERROR
+          if (state
+          is ActiveMemberError) {
+
+            return Center(
+              child: Text(
+                state.message,
+              ),
+            );
+          }
+
+          /// SUCCESS
+          if (state
+          is ActiveMemberLoaded) {
+
+            return _memberListView(
+              members:
+              state.members,
+
+              isTablet:
+              isTablet,
+
+              isLoadingMore:
+              false,
+            );
+          }
+
+          /// PAGINATION LOADING
+          if (state
+          is ActiveMemberPaginationLoading) {
+
+            return _memberListView(
+              members:
+              state.members,
+
+              isTablet:
+              isTablet,
+
+              isLoadingMore:
+              true,
+            );
+          }
+
+          return const SizedBox();
+        },
+      );
+    }
+
+    /// ================= NOT VISITING =================
+
+    return BlocBuilder<
+        InActiveMemberCubit,
+        InActiveMemberState>(
+      builder: (
+          context,
+          state,
+          ) {
+
+        /// LOADING
+        if (state
+        is InActiveMemberLoading) {
+
+          return _loadingList(
+            isTablet:
+            isTablet,
+            h: h,
+          );
+        }
+
+        /// ERROR
+        if (state
+        is InActiveMemberError) {
+
+          return Center(
+            child: Text(
+              state.message,
+            ),
+          );
+        }
+
+        /// SUCCESS
+        if (state
+        is InActiveMemberLoaded) {
+
+          return _memberListView(
+            members:
+            state.members,
+
+            isTablet:
+            isTablet,
+
+            isLoadingMore:
+            false,
+          );
+        }
+
+        /// PAGINATION LOADING
+        if (state
+        is InActiveMemberPaginationLoading) {
+
+          return _memberListView(
+            members:
+            state.members,
+
+            isTablet:
+            isTablet,
+
+            isLoadingMore:
+            true,
+          );
+        }
+
+        return const SizedBox();
+      },
+    );
+  }
+
   /// TAB
   Widget _buildTab({
     required String title,
@@ -519,6 +588,37 @@ class _MemberDetailsPageState
           setState(() {
             selectedTab = index;
           });
+
+          /// ALL
+          if (index == 0) {
+
+            context
+                .read<MemberCubit>()
+                .getAllMembers(
+              isRefresh: true,
+            );
+          }
+
+          /// ACTIVE
+          else if (index == 1) {
+
+            context
+                .read<ActiveMemberCubit>()
+                .getActiveMembers(
+              isRefresh: true,
+            );
+          }
+
+          /// NOT VISITING
+          else {
+
+            context
+                .read<
+                InActiveMemberCubit>()
+                .getINActiveMembers(
+              isRefresh: true,
+            );
+          }
         },
 
         child: Container(
@@ -575,8 +675,7 @@ class _MemberDetailsPageState
               isSelected
                   ? AppColors
                   .primary
-                  : Colors
-                  .black87,
+                  : Colors.black87,
             ),
           ),
         ),
@@ -584,7 +683,109 @@ class _MemberDetailsPageState
     );
   }
 
-  /// MEMBER TILE
+  /// MEMBER LIST
+  Widget _memberListView({
+    required List members,
+    required bool isTablet,
+    required bool isLoadingMore,
+  }) {
+
+    if (members.isEmpty) {
+
+      return Center(
+        child: Column(
+          mainAxisAlignment:
+          MainAxisAlignment.center,
+
+          children: const [
+
+            Icon(
+              Icons.people_outline,
+              size: 60,
+              color: Colors.grey,
+            ),
+
+            SizedBox(
+              height: 12,
+            ),
+
+            Text(
+              "No Members Found",
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+
+      controller:
+      scrollController,
+
+      physics:
+      const BouncingScrollPhysics(),
+
+      itemCount:
+      members.length +
+          (isLoadingMore
+              ? 1
+              : 0),
+
+      separatorBuilder:
+          (_, __) =>
+      const SizedBox(
+        height: 18,
+      ),
+
+      itemBuilder:
+          (context, index) {
+
+        /// PAGINATION LOADER
+        if (index ==
+            members.length) {
+
+          return const Padding(
+            padding:
+            EdgeInsets.all(
+              20,
+            ),
+
+            child: Center(
+              child:
+              CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final member =
+        members[index];
+
+        return _memberTile(
+
+          name:
+          member.user?.name ??
+              "",
+
+          mobNo:
+          member.user?.mobNo
+              ?.toString() ??
+              "",
+
+          status:
+          member.memberStatus ??
+              "",
+
+          image:
+          member.profilePhoto ??
+              "",
+
+          isTablet:
+          isTablet,
+        );
+      },
+    );
+  }
+
   /// MEMBER TILE
   Widget _memberTile({
     required String name,
@@ -594,50 +795,71 @@ class _MemberDetailsPageState
     required bool isTablet,
   }) {
 
-    /// NORMALIZED STATUS
     final String normalizedStatus =
-    status.trim().toLowerCase();
+    status
+        .trim()
+        .toLowerCase();
 
-    /// STATUS COLORS
     Color statusColor;
     Color bgColor;
 
     switch (normalizedStatus) {
 
       case "active":
-        statusColor = Colors.green;
+
+        statusColor =
+            Colors.green;
+
         bgColor =
-            Colors.green.withOpacity(.1);
+            Colors.green
+                .withOpacity(.1);
+
         break;
 
       case "expired":
-        statusColor = Colors.orange;
+
+        statusColor =
+            Colors.orange;
+
         bgColor =
-            Colors.orange.withOpacity(.1);
+            Colors.orange
+                .withOpacity(.1);
+
         break;
 
       case "inactive":
-        statusColor = Colors.red;
+
+        statusColor =
+            Colors.red;
+
         bgColor =
-            Colors.red.withOpacity(.1);
+            Colors.red
+                .withOpacity(.1);
+
         break;
 
       default:
-        statusColor = Colors.grey;
+
+        statusColor =
+            Colors.grey;
+
         bgColor =
-            Colors.grey.withOpacity(.1);
+            Colors.grey
+                .withOpacity(.1);
     }
 
-    /// SAFE IMAGE CHECK
     final bool hasImage =
         image.trim().isNotEmpty;
 
     return Container(
 
       padding:
-      const EdgeInsets.all(14),
+      const EdgeInsets.all(
+        14,
+      ),
 
-      decoration: BoxDecoration(
+      decoration:
+      BoxDecoration(
         color: Colors.white,
 
         borderRadius:
@@ -647,7 +869,8 @@ class _MemberDetailsPageState
 
         border: Border.all(
           color:
-          Colors.grey.shade200,
+          Colors.grey
+              .shade200,
         ),
       ),
 
@@ -662,18 +885,14 @@ class _MemberDetailsPageState
                 : 24,
 
             backgroundColor:
-            Colors.grey.shade300,
+            Colors.grey
+                .shade300,
 
             backgroundImage:
             hasImage
                 ? NetworkImage(
               image,
             )
-                : null,
-
-            onBackgroundImageError:
-            hasImage
-                ? (_, __) {}
                 : null,
 
             child:
@@ -689,7 +908,9 @@ class _MemberDetailsPageState
                 : null,
           ),
 
-          const SizedBox(width: 14),
+          const SizedBox(
+            width: 14,
+          ),
 
           Expanded(
             child: Column(
@@ -749,7 +970,6 @@ class _MemberDetailsPageState
 
             decoration:
             BoxDecoration(
-
               color: bgColor,
 
               borderRadius:
@@ -764,18 +984,46 @@ class _MemberDetailsPageState
               status,
 
               style: TextStyle(
-
                 color:
                 statusColor,
 
                 fontWeight:
-                FontWeight
-                    .w600,
+                FontWeight.w600,
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// LOADING LIST
+  Widget _loadingList({
+    required bool isTablet,
+    required double Function(double) h,
+  }) {
+
+    return ListView.separated(
+
+      physics:
+      const BouncingScrollPhysics(),
+
+      itemCount: 8,
+
+      separatorBuilder:
+          (_, __) =>
+          SizedBox(
+            height: h(18),
+          ),
+
+      itemBuilder:
+          (_, __) {
+
+        return _skeletonTile(
+          isTablet:
+          isTablet,
+        );
+      },
     );
   }
 
@@ -799,7 +1047,8 @@ class _MemberDetailsPageState
           14,
         ),
 
-        decoration: BoxDecoration(
+        decoration:
+        BoxDecoration(
           color: Colors.white,
 
           borderRadius:
@@ -864,7 +1113,8 @@ class _MemberDetailsPageState
 
               decoration:
               BoxDecoration(
-                color: Colors.white,
+                color:
+                Colors.white,
 
                 borderRadius:
                 BorderRadius

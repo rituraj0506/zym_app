@@ -11,6 +11,8 @@ import 'package:zymmanagement/user/dashboard_container.dart';
 import 'package:zymmanagement/user/features/profile/presentation/cubit/user_profile_cubit.dart';
 import 'owner/features/home/presentation/cubit/owner_dashboard_cubit.dart';
 import 'owner/features/home/presentation/pages/owner_dashboard_page.dart';
+import 'owner/features/member/presentation/cubit/active_member_cubit.dart';
+import 'owner/features/member/presentation/cubit/inactive_member_cubit.dart';
 import 'owner/features/member/presentation/cubit/member_cubit.dart';
 import 'owner/features/plan/presentation/cubit/plan_cubit.dart';
 import 'owner/features/profile/presentation/cubit/gym_profile_cubit.dart';
@@ -49,6 +51,14 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (_) => MemberCubit(),
       ),
+
+        BlocProvider(
+          create: (_) => ActiveMemberCubit(),
+        ),
+
+        BlocProvider(
+          create: (_) => InActiveMemberCubit(),
+        ),
 
         BlocProvider(
           create: (_) => UserProfileCubit(),
