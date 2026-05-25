@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zymmanagement/login_screen.dart';
 import 'package:zymmanagement/owner/dashboard_screen.dart';
+import 'package:zymmanagement/owner/features/attendance/presentation/cubit/attendance_by_date_cubit.dart';
 import 'package:zymmanagement/owner/features/attendance/presentation/cubit/attendance_cubit.dart';
 import 'package:zymmanagement/owner/features/expiredplan/presentation/cubit/expired_plan_cubit.dart';
 import 'package:zymmanagement/owner/features/qr/presentation/cubit/scan_qr_cubit.dart';
@@ -74,6 +75,10 @@ class MyApp extends StatelessWidget {
 
         BlocProvider(
           create: (_) => ExpiredPlanCubit(),
+        ),
+
+        BlocProvider(
+          create: (_) => AttendanceByDateCubit(),
         ),
       ],
 

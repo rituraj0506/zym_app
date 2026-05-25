@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:zymmanagement/owner/features/attendance/presentation/pages/attendance_by_date.dart';
 import '../cubit/attendance_cubit.dart';
 import '../cubit/attendance_state.dart';
 
@@ -356,12 +357,36 @@ class _AttendanceDetailsPageState
                                   ),
 
                                   child:
-                                  const Icon(
-                                    Icons
-                                        .calendar_month_rounded,
+                                   IconButton(
+                                    onPressed: () async {
 
-                                    color:
-                                    Colors.white,
+                                      final pickedDate =
+                                      await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime(2024),
+                                        lastDate: DateTime.now(),
+                                      );
+
+                                      if (pickedDate != null) {
+
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                AttendanceByDate(
+                                                  selectedDate:
+                                                  pickedDate,
+                                                ),
+                                          ),
+                                        );
+                                      }
+                                    },
+
+                                    icon: const Icon(
+                                      Icons.calendar_month_rounded,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ],

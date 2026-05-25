@@ -570,9 +570,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                           ),
 
                           quickActionCard(
-                            icon: Icons.groups_2_rounded,
+                            icon: Icons.card_membership_rounded,
 
-                            title: "Members",
+                            title: "Membership",
 
                             onTap: () {
                               Navigator.push(
