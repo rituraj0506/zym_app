@@ -413,7 +413,7 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                             SizedBox(height: isTablet ? 12 : 8),
 
                             Text(
-                              "Members Present",
+                              "Members Present Inside",
 
                               style: TextStyle(
                                 color: Colors.white.withOpacity(.9),

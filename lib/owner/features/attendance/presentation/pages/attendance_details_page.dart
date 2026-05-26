@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:zymmanagement/owner/features/attendance/presentation/pages/attendance_by_date.dart';
 import '../cubit/attendance_cubit.dart';
 import '../cubit/attendance_state.dart';
@@ -506,13 +507,64 @@ class _AttendanceDetailsPageState
                     ),
 
                     /// LOADING
-                    if (state
-                    is AttendanceLoading)
+                    // if (state
+                    // is AttendanceLoading)
+                    //
+                    //   const Expanded(
+                    //     child: Center(
+                    //       child:
+                    //       CircularProgressIndicator(),
+                    //     ),
+                    //   )
 
-                      const Expanded(
-                        child: Center(
-                          child:
-                          CircularProgressIndicator(),
+                    if (state is AttendanceLoading)
+
+                      Expanded(
+                        child: Container(
+
+                          margin: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 24 : 16,
+                          ),
+
+                          padding: EdgeInsets.all(
+                            isTablet ? 24 : 18,
+                          ),
+
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+
+                            borderRadius:
+                            BorderRadius.circular(30),
+
+                            boxShadow: [
+
+                              BoxShadow(
+                                color: Colors.black.withOpacity(.04),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+
+                          child: ListView.builder(
+
+                            itemCount: 6,
+
+                            itemBuilder: (context, index) {
+
+                              return Padding(
+
+                                padding:
+                                const EdgeInsets.only(
+                                  bottom: 18,
+                                ),
+
+                                child: shimmerMemberTile(
+                                  isTablet: isTablet,
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       )
 
@@ -1084,4 +1136,160 @@ class _AttendanceDetailsPageState
       ),
     );
   }
+
+
+
+  Widget shimmerMemberTile({
+    required bool isTablet,
+  }) {
+
+    return Shimmer.fromColors(
+
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+
+      child: Container(
+
+        padding: EdgeInsets.all(
+          isTablet ? 18 : 14,
+        ),
+
+        decoration: BoxDecoration(
+
+          color:
+          const Color(
+            0xFFF7F8FC,
+          ),
+
+          borderRadius:
+          BorderRadius.circular(
+            22,
+          ),
+        ),
+
+        child: Row(
+          children: [
+
+            /// AVATAR
+            Container(
+
+              height:
+              isTablet
+                  ? 70
+                  : 48,
+
+              width:
+              isTablet
+                  ? 70
+                  : 48,
+
+              decoration:
+              BoxDecoration(
+
+                color: Colors.white,
+
+                borderRadius:
+                BorderRadius.circular(
+                  20,
+                ),
+              ),
+            ),
+
+            SizedBox(
+              width:
+              isTablet
+                  ? 18
+                  : 14,
+            ),
+
+            /// NAME + TIME
+            Expanded(
+              child: Column(
+
+                crossAxisAlignment:
+                CrossAxisAlignment
+                    .start,
+
+                children: [
+
+                  Container(
+
+                    height:
+                    isTablet
+                        ? 18
+                        : 14,
+
+                    width:
+                    isTablet
+                        ? 180
+                        : 120,
+
+                    decoration:
+                    BoxDecoration(
+
+                      color: Colors.white,
+
+                      borderRadius:
+                      BorderRadius.circular(
+                        8,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 12,
+                  ),
+
+                  Container(
+
+                    height: 10,
+
+                    width:
+                    isTablet
+                        ? 120
+                        : 90,
+
+                    decoration:
+                    BoxDecoration(
+
+                      color: Colors.white,
+
+                      borderRadius:
+                      BorderRadius.circular(
+                        8,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            /// STATUS
+            Container(
+
+              height: 40,
+
+              width:
+              isTablet
+                  ? 90
+                  : 70,
+
+              decoration:
+              BoxDecoration(
+
+                color: Colors.white,
+
+                borderRadius:
+                BorderRadius.circular(
+                  14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
 }

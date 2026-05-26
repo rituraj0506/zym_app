@@ -342,30 +342,30 @@ class _MemberDetailsPageState
         ),
       ),
 
-      floatingActionButton:
-      FloatingActionButton.extended(
-
-        backgroundColor:
-        AppColors.primary,
-
-        onPressed: () {},
-
-        icon: const Icon(
-          Icons.add,
-        ),
-
-        label: Text(
-
-          "Add Member",
-
-          style: TextStyle(
-            fontSize:
-            isTablet
-                ? 16
-                : 14,
-          ),
-        ),
-      ),
+      // floatingActionButton:
+      // FloatingActionButton.extended(
+      //
+      //   backgroundColor:
+      //   AppColors.primary,
+      //
+      //   onPressed: () {},
+      //
+      //   icon: const Icon(
+      //     Icons.add,
+      //   ),
+      //
+      //   label: Text(
+      //
+      //     "Add Member",
+      //
+      //     style: TextStyle(
+      //       fontSize:
+      //       isTablet
+      //           ? 16
+      //           : 14,
+      //     ),
+      //   ),
+      // ),
     );
   }
 

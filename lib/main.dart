@@ -9,6 +9,7 @@ import 'package:zymmanagement/owner/features/qr/presentation/cubit/scan_qr_cubit
 import 'package:zymmanagement/splash_screen.dart';
 import 'package:zymmanagement/theme/app_theme.dart';
 import 'package:zymmanagement/user/dashboard_container.dart';
+import 'package:zymmanagement/user/features/home/presentation/cubit/user_dashboard_cubit.dart';
 import 'package:zymmanagement/user/features/profile/presentation/cubit/user_profile_cubit.dart';
 import 'owner/features/home/presentation/cubit/owner_dashboard_cubit.dart';
 import 'owner/features/home/presentation/pages/owner_dashboard_page.dart';
@@ -38,6 +39,10 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (_) =>
               OwnerDashboardCubit(),
+        ),
+
+        BlocProvider(
+          create: (_) => UserDashboardCubit(),
         ),
 
         BlocProvider(
