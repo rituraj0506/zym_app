@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../../network/secure_storge.dart';
 import '../../../home/presentation/cubit/owner_dashboard_cubit.dart';
+import '../../../member/presentation/cubit/member_cubit.dart';
 import '../cubit/gym_profile_cubit.dart';
 import '../cubit/gym_profile_state.dart';
 import 'gym_details_page.dart';
@@ -35,10 +37,21 @@ class _ProfilePageState
       logoutLoading = true;
     });
 
+    final prefs =
+    await SharedPreferences.getInstance();
+
+    await prefs.clear();
+
     /// CLEAR DASHBOARD
     context
         .read<OwnerDashboardCubit>()
         .clearDashboard();
+
+    /// CLEAR MEMBERS
+    context
+        .read<MemberCubit>()
+        .clearMembers();
+
 
     /// CLEAR STORAGE
     await SecureStorageService.clearAll();

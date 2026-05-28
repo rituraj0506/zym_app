@@ -8,6 +8,7 @@ class ScanQrLoading extends ScanQrState {}
 
 /// SUCCESS
 class ScanQrSuccess extends ScanQrState {
+
   final String type;
 
   final String memberName;
@@ -38,7 +39,13 @@ class ScanQrSuccess extends ScanQrState {
 
 /// ERROR
 class ScanQrError extends ScanQrState {
+
+  final String type;
+
   final String message;
 
-  ScanQrError(this.message);
+  ScanQrError({
+    required this.type,
+    required this.message,
+  });
 }

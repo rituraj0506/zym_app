@@ -15,7 +15,9 @@ class MemberApiServices {
 
       final Response response =
       await DioClient.dio.get(
+
         "/members/all",
+
         queryParameters: {
           "page": page,
           "limit": limit,
@@ -24,63 +26,47 @@ class MemberApiServices {
 
       print(response.data);
 
-      /// SAFELY HANDLE RESPONSE
-      if (response.data is! Map<String, dynamic>) {
+      /// SAFE RESPONSE
+      if (response.data
+      is! Map<String, dynamic>) {
 
-        throw Exception(
-          "Invalid response format",
-        );
+        throw "Invalid response format";
       }
 
       final Map<String, dynamic> data =
-          response.data;
+      Map<String, dynamic>.from(
+        response.data,
+      );
 
-      if (response.statusCode == 200 &&
-          data["success"] == true) {
+      /// SUCCESS
+      if (data["success"] == true) {
 
         return MembersResponseModel
             .fromJson(data);
-
-      } else {
-
-        throw Exception(
-          data["message"]?.toString() ??
-              "Failed to fetch members",
-        );
       }
+
+      /// BACKEND ERROR
+      throw data["message"] ??
+          "Failed to fetch members";
 
     } on DioException catch (e) {
 
-      print("DIO ERROR : ${e.response?.data}");
+      print(
+        "DIO ERROR : "
+            "${e.response?.data}",
+      );
 
-      String? errorMessage =
+      throw e.error ??
+          e.response?.data["message"] ??
           "Something went wrong";
-
-      if (e.response?.data
-      is Map<String, dynamic>) {
-
-        errorMessage =
-            e.response?.data["message"]
-                ?.toString() ??
-                errorMessage;
-
-      } else if (e.response?.data
-      is String) {
-
-        errorMessage =
-            e.response?.data.toString();
-      }
-
-      throw Exception(errorMessage);
 
     } catch (e) {
 
       print("ERROR : $e");
 
-      throw Exception(e.toString());
+      throw e.toString();
     }
   }
-
 
 
 

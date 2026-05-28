@@ -72,14 +72,25 @@ class MemberCubit extends Cubit<MemberState> {
           isLoadingMore: false,
         ),
       );
-    } catch (e, stackTrace) {
-      print("MEMBER ERROR : $e");
+    } catch (e) {
+      String errorMessage =
+      e.toString();
 
-      print("STACKTRACE : $stackTrace");
+      /// REMOVE EXCEPTION:
+      if (errorMessage.startsWith(
+        "Exception:",
+      )) {
+
+        errorMessage =
+            errorMessage.replaceFirst(
+              "Exception:",
+              "",
+            ).trim();
+      }
 
       emit(
         MemberError(
-          e.toString(),
+          errorMessage,
         ),
       );
     } finally {
@@ -136,11 +147,41 @@ class MemberCubit extends Cubit<MemberState> {
       /// REFRESH MEMBER LIST
       await refreshMembers();
     } catch (e) {
+      String errorMessage =
+      e.toString();
+
+      if (errorMessage.startsWith(
+        "Exception:",
+      )) {
+
+        errorMessage =
+            errorMessage.replaceFirst(
+              "Exception:",
+              "",
+            ).trim();
+      }
+
       emit(
         MemberError(
-          e.toString(),
+          errorMessage,
         ),
       );
     }
   }
+
+
+
+  void clearMembers() {
+
+    allMembers.clear();
+
+    currentPage = 1;
+
+    hasNextPage = true;
+
+    isLoading = false;
+
+    emit(const MemberInitial());
+  }
+
 }

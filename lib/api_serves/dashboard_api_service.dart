@@ -7,9 +7,8 @@ import '../network/dio_client.dart';
 class DashboardApiService {
 
   /// GET DASHBOARD
-
   static Future<OwnerDashboardResponse>
-  getProfileDetails() async {
+  getDashBoardDetails() async {
 
     try {
 
@@ -18,31 +17,30 @@ class DashboardApiService {
         "/owner-dashboard/summary",
       );
 
-      final data = response.data;
+      final data =
+      Map<String, dynamic>.from(
+        response.data,
+      );
 
-      if (response.statusCode == 200 &&
-          data["success"] == true) {
+      /// SUCCESS
+      if (data["success"] == true) {
 
         return OwnerDashboardResponse
             .fromJson(data);
-
-      } else {
-
-        throw Exception(
-          data["message"] ??
-              "Failed to fetch dashboard",
-        );
       }
+
+      /// CUSTOM ERROR
+      throw data["message"] ??
+          "Failed to fetch dashboard";
 
     } on DioException catch (e) {
 
-      throw Exception(
-        e.response?.data["message"] ??
-            e.message ??
-            "Something went wrong",
-      );
+      throw e.error ??
+          e.response?.data["message"] ??
+          "Something went wrong";
     }
   }
+
 
   /// CREATE GYM PROFILE
 

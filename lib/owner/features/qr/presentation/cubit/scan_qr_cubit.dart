@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../../api_serves/qr_scanner_api_service.dart';
+
 import 'scan_qr_state.dart';
 
 class ScanQrCubit
@@ -23,27 +25,43 @@ class ScanQrCubit
       );
 
       final member =
-      response["data"]["member"];
+      Map<String, dynamic>.from(
+        response["data"]["member"],
+      );
 
       final attendance =
-      response["data"]["attendance"];
+      Map<String, dynamic>.from(
+        response["data"]["attendance"],
+      );
 
       emit(
+
         ScanQrSuccess(
-          type: response["type"],
+
+          type:
+          response["type"]
+              ?.toString() ??
+              "",
 
           memberName:
-          member["name"] ?? "",
+          member["name"]
+              ?.toString() ??
+              "",
 
           message:
-          response["message"] ?? "",
+          response["message"]
+              ?.toString() ??
+              "",
 
           voiceText:
-          response["voiceText"] ?? "",
+          response["voiceText"]
+              ?.toString() ??
+              "",
 
           checkInTime:
           attendance["checkInTime"]
-              .toString(),
+              ?.toString() ??
+              "",
 
           checkOutTime:
           attendance["checkOutTime"]
@@ -51,35 +69,53 @@ class ScanQrCubit
 
           attendanceDate:
           attendance["attendanceDate"]
-              .toString(),
+              ?.toString() ??
+              "",
 
           profilePhoto:
-          member["profilePhoto"],
+          member["profilePhoto"]
+              ?.toString(),
         ),
       );
 
     } catch (e) {
 
-      String errorMessage =
-      e.toString();
-
-      /// REMOVE "Exception:"
-      if (errorMessage.startsWith(
-        "Exception:",
-      )) {
-
-        errorMessage =
-            errorMessage.replaceFirst(
-              "Exception:",
-              "",
-            ).trim();
-      }
-
-      emit(
-        ScanQrError(
-          errorMessage,
-        ),
+      print(
+        "SCAN QR ERROR : $e",
       );
+
+      if (e is Map) {
+
+        final error =
+        Map<String, dynamic>.from(e);
+
+        emit(
+          ScanQrError(
+
+            type:
+            error["type"]
+                ?.toString() ??
+                "unknown",
+
+            message:
+            error["message"]
+                ?.toString() ??
+                "Something went wrong",
+          ),
+        );
+
+      } else {
+
+        emit(
+          ScanQrError(
+
+            type: "unknown",
+
+            message:
+            e.toString(),
+          ),
+        );
+      }
     }
   }
 }

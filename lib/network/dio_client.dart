@@ -52,6 +52,7 @@ class DioClient {
   static final Dio dio = Dio(
 
     BaseOptions(
+
       baseUrl: Apiendpoint.baseUrl,
 
       connectTimeout:
@@ -59,6 +60,13 @@ class DioClient {
 
       receiveTimeout:
       const Duration(seconds: 10),
+
+      /// IMPORTANT
+      validateStatus: (status) {
+
+        return status != null &&
+            status < 500;
+      },
     ),
   )
 
@@ -166,11 +174,20 @@ class DioClient {
           }
 
           return handler.reject(
+
             DioException(
+
               requestOptions:
               error.requestOptions,
 
-              error: errorMessage,
+              response:
+              error.response,
+
+              type:
+              error.type,
+
+              error:
+              errorMessage,
             ),
           );
         },
