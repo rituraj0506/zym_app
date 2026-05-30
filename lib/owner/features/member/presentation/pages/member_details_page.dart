@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
-
 import '../../../../../theme/app_colors.dart';
-
 import '../cubit/member_cubit.dart';
 import '../cubit/member_state.dart';
-
 import '../cubit/active_member_cubit.dart';
 import '../cubit/active_member_state.dart';
-
 import '../cubit/inactive_member_cubit.dart';
 import '../cubit/inactive_member_state.dart';
+
+import 'member_tile.dart';
 
 class MemberDetailsPage extends StatefulWidget {
   const MemberDetailsPage({
@@ -760,242 +758,44 @@ class _MemberDetailsPageState
         final member =
         members[index];
 
-        return _memberTile(
+
+        return MemberTile(
 
           name:
-          member.user?.name ??
-              "",
+          member.user?.name ?? "",
 
           mobNo:
-          member.user?.mobNo
-              ?.toString() ??
-              "",
+          member.user?.mobNo?.toString() ?? "",
 
           status:
-          member.memberStatus ??
-              "",
+          member.memberStatus ?? "",
 
           image:
-          member.profilePhoto ??
-              "",
+          member.profilePhoto ?? "",
 
           isTablet:
           isTablet,
+
+          onEdit: () {
+
+            /// EDIT MEMBER
+          },
+
+          onDelete: () {
+
+            /// DELETE MEMBER
+          },
+
+          onTap: () {
+
+            /// OPEN DETAILS
+          },
         );
+
       },
     );
   }
 
-  /// MEMBER TILE
-  Widget _memberTile({
-    required String name,
-    required String mobNo,
-    required String status,
-    required String image,
-    required bool isTablet,
-  }) {
-
-    final String normalizedStatus =
-    status
-        .trim()
-        .toLowerCase();
-
-    Color statusColor;
-    Color bgColor;
-
-    switch (normalizedStatus) {
-
-      case "active":
-
-        statusColor =
-            Colors.green;
-
-        bgColor =
-            Colors.green
-                .withOpacity(.1);
-
-        break;
-
-      case "expired":
-
-        statusColor =
-            Colors.orange;
-
-        bgColor =
-            Colors.orange
-                .withOpacity(.1);
-
-        break;
-
-      case "inactive":
-
-        statusColor =
-            Colors.red;
-
-        bgColor =
-            Colors.red
-                .withOpacity(.1);
-
-        break;
-
-      default:
-
-        statusColor =
-            Colors.grey;
-
-        bgColor =
-            Colors.grey
-                .withOpacity(.1);
-    }
-
-    final bool hasImage =
-        image.trim().isNotEmpty;
-
-    return Container(
-
-      padding:
-      const EdgeInsets.all(
-        14,
-      ),
-
-      decoration:
-      BoxDecoration(
-        color: Colors.white,
-
-        borderRadius:
-        BorderRadius.circular(
-          18,
-        ),
-
-        border: Border.all(
-          color:
-          Colors.grey
-              .shade200,
-        ),
-      ),
-
-      child: Row(
-        children: [
-
-          CircleAvatar(
-
-            radius:
-            isTablet
-                ? 28
-                : 24,
-
-            backgroundColor:
-            Colors.grey
-                .shade300,
-
-            backgroundImage:
-            hasImage
-                ? NetworkImage(
-              image,
-            )
-                : null,
-
-            child:
-            !hasImage
-                ? Icon(
-              Icons.person,
-
-              size:
-              isTablet
-                  ? 28
-                  : 22,
-            )
-                : null,
-          ),
-
-          const SizedBox(
-            width: 14,
-          ),
-
-          Expanded(
-            child: Column(
-
-              crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
-
-              children: [
-
-                Text(
-
-                  name,
-
-                  style: TextStyle(
-                    fontSize:
-                    isTablet
-                        ? 18
-                        : 15,
-
-                    fontWeight:
-                    FontWeight.w600,
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 4,
-                ),
-
-                Text(
-
-                  "MobNo: $mobNo",
-
-                  style: TextStyle(
-                    fontSize:
-                    isTablet
-                        ? 14
-                        : 12,
-
-                    color:
-                    Colors.grey
-                        .shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Container(
-
-            padding:
-            const EdgeInsets
-                .symmetric(
-              horizontal: 10,
-              vertical: 5,
-            ),
-
-            decoration:
-            BoxDecoration(
-              color: bgColor,
-
-              borderRadius:
-              BorderRadius
-                  .circular(
-                10,
-              ),
-            ),
-
-            child: Text(
-
-              status,
-
-              style: TextStyle(
-                color:
-                statusColor,
-
-                fontWeight:
-                FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// LOADING LIST
   Widget _loadingList({

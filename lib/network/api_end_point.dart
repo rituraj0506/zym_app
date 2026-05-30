@@ -11,4 +11,5 @@ class Apiendpoint {
 
   static const String imageBaseUrl =
       "http://192.168.1.7:8000";
+
 }
