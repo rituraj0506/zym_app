@@ -107,6 +107,10 @@ class Member {
   final User? user;
   final String? owner;
   final String? gym;
+
+  final String? name; // Added
+  final String? mobNo; // Added
+
   final int? age;
   final String? aadhaarNo;
   final String? profilePhoto;
@@ -126,6 +130,8 @@ class Member {
     this.user,
     this.owner,
     this.gym,
+    this.name,
+    this.mobNo,
     this.age,
     this.aadhaarNo,
     this.profilePhoto,
@@ -141,9 +147,7 @@ class Member {
     this.lastAttendanceDate,
   });
 
-  factory Member.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory Member.fromJson(Map<String, dynamic> json) {
     return Member(
       id: json['_id'],
       user: json['user'] != null
@@ -151,6 +155,8 @@ class Member {
           : null,
       owner: json['owner'],
       gym: json['gym'],
+      name: json['name'],
+      mobNo: json['mobNo']?.toString(),
       age: json['age'],
       aadhaarNo: json['aadhaarNo'],
       profilePhoto: json['profilePhoto'],
@@ -173,6 +179,8 @@ class Member {
       'user': user?.toJson(),
       'owner': owner,
       'gym': gym,
+      'name': name,
+      'mobNo': mobNo,
       'age': age,
       'aadhaarNo': aadhaarNo,
       'profilePhoto': profilePhoto,
