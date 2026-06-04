@@ -170,6 +170,73 @@ class MemberCubit extends Cubit<MemberState> {
   }
 
 
+  Future<void> updateMember({
+    required String memberId,
+    required String name,
+    required String age,
+    required String mobNo,
+    required String aadhaarNo,
+    required String email,
+    required String planId,
+    File? profilePhoto,
+  }) async {
+
+    try {
+
+      emit(const AddMemberLoading());
+
+      FormData formData = FormData.fromMap({
+
+        "name": name,
+        "age": age,
+        "mobNo": mobNo,
+        "aadhaarNo": aadhaarNo,
+        "email": email,
+        "planId": planId,
+
+        if (profilePhoto != null)
+          "profilePhoto": await MultipartFile.fromFile(
+            profilePhoto.path,
+            filename:
+            profilePhoto.path.split("/").last,
+          ),
+      });
+
+      final message =
+      await MemberApiServices.updateMember(
+        memberId: memberId,
+        formData: formData,
+      );
+
+      emit(
+        AddMemberSuccess(message),
+      );
+
+      await refreshMembers();
+
+    } catch (e) {
+
+      String errorMessage =
+      e.toString();
+
+      if (errorMessage.startsWith(
+        "Exception:",
+      )) {
+
+        errorMessage =
+            errorMessage.replaceFirst(
+              "Exception:",
+              "",
+            ).trim();
+      }
+
+      emit(
+        MemberError(
+          errorMessage,
+        ),
+      );
+    }
+  }
 
   void clearMembers() {
 

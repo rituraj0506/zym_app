@@ -501,7 +501,7 @@ class GymDetailsPage extends StatelessWidget {
                         title: "Created At",
 
                         value:
-                        gym?.createdAt ?? "-",
+                        gym?.createdAt?.toLocal().toString().split(' ')[0] ?? "-"
                       ),
                     ],
                   ),

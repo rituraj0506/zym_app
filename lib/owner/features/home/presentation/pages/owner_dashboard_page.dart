@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zymmanagement/owner/features/expiredplan/presentation/pages/expired_plan_details.dart';
 import 'package:zymmanagement/owner/features/member/presentation/pages/add_member_page.dart';
+import 'package:zymmanagement/owner/features/sendnotification/presentation/pages/send_notification_page.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
 import '../../../plan/presentation/pages/add_plan__page.dart';
 import '../../../plan/presentation/pages/plan_details_page.dart';
@@ -190,26 +191,31 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                             ),
                           ),
 
-                          Container(
-                            height: isTablet ? 56 : 48,
+                          InkWell(
+                            onTap: (){
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>SendNotificationPage()));
+                            },
+                            child: Container(
+                              height: isTablet ? 56 : 48,
 
-                            width: isTablet ? 56 : 48,
+                              width: isTablet ? 56 : 48,
 
-                            decoration: BoxDecoration(
-                              color: Colors.white,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
 
-                              borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(16),
 
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(.04),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(.04),
 
-                                  blurRadius: 14,
-                                ),
-                              ],
+                                    blurRadius: 14,
+                                  ),
+                                ],
+                              ),
+
+                              child: const Icon(Icons.message_sharp),
                             ),
-
-                            child: const Icon(Icons.notifications_none_rounded),
                           ),
                         ],
                       ),

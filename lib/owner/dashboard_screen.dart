@@ -3,10 +3,11 @@ import 'package:zymmanagement/owner/features/attendance/presentation/pages/atten
 import 'package:zymmanagement/owner/features/member/presentation/pages/member_details_page.dart';
 import 'package:zymmanagement/owner/features/profile/presentation/pages/profile_page.dart';
 import 'package:zymmanagement/owner/features/qr/presentation/pages/qr_scanner_page.dart';
-
 import '../theme/app_colors.dart';
 import 'custom_bottom_navbar.dart';
 import 'features/home/presentation/pages/owner_dashboard_page.dart';
+
+import 'package:permission_handler/permission_handler.dart';
 
 
 class DashboardScreen extends StatefulWidget {
@@ -15,8 +16,59 @@ class DashboardScreen extends StatefulWidget {
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
+
+
 class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
+
+
+
+  Future<void> openScanner() async {
+
+    final status = await Permission.camera.request();
+
+    if (status.isGranted) {
+
+      setState(() {
+        selectedIndex = 2;
+      });
+
+    } else if (status.isDenied) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Camera permission is required to scan QR.",
+          ),
+        ),
+      );
+
+    } else if (status.isPermanentlyDenied) {
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Camera Permission"),
+          content: const Text(
+            "Please enable camera permission from settings.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await openAppSettings();
+              },
+              child: const Text("Settings"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
   final List<Widget> screens = [
     const OwnerDashboardPage(),
@@ -78,9 +130,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         body: screens[selectedIndex],
 
+        // floatingActionButton: GestureDetector(
+        //   onTap: () {
+        //     onTabTapped(2);
+        //   },
+
         floatingActionButton: GestureDetector(
-          onTap: () {
-            onTabTapped(2);
+          onTap: () async {
+            await openScanner();
           },
 
           child: Container(
@@ -126,24 +183,5 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class DummyPage extends StatelessWidget {
-  final String title;
 
-  const DummyPage({
-    super.key,
-    required this.title,
-  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}

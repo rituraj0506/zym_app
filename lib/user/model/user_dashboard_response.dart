@@ -76,7 +76,7 @@ class Member {
   final String? id;
   final String? name;
   final String? email;
-  final int? mobNo;
+  final String? mobNo;
   final String? profilePhoto;
   final String? memberStatus;
   final String? qrToken;
@@ -98,7 +98,7 @@ class Member {
       id: json['_id'],
       name: json['name'],
       email: json['email'],
-      mobNo: json['mobNo'],
+      mobNo: json['mobNo']?.toString(),
       profilePhoto: json['profilePhoto'],
       memberStatus: json['memberStatus'],
       qrToken: json['qrToken'],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
@@ -9,6 +10,9 @@ import '../cubit/active_member_state.dart';
 import '../cubit/inactive_member_cubit.dart';
 import '../cubit/inactive_member_state.dart';
 
+import '../cubit/search_member_cubit.dart';
+import '../cubit/search_member_state.dart';
+import 'add_member_page.dart';
 import 'member_tile.dart';
 
 class MemberDetailsPage extends StatefulWidget {
@@ -28,6 +32,15 @@ class _MemberDetailsPageState
 
   final ScrollController scrollController =
   ScrollController();
+
+  bool isSearching = false;
+
+  Timer? _debounce;
+
+  final TextEditingController searchController =
+  TextEditingController();
+
+
 
   @override
   void initState() {
@@ -93,7 +106,12 @@ class _MemberDetailsPageState
   }
 
   @override
+  @override
   void dispose() {
+
+    _debounce?.cancel();
+
+    searchController.dispose();
 
     scrollController.dispose();
 
@@ -190,19 +208,50 @@ class _MemberDetailsPageState
                         ),
 
                         child:
-                        const TextField(
-                          decoration:
-                          InputDecoration(
-                            hintText:
-                            "Search member...",
+                        TextField(
 
-                            prefixIcon:
-                            Icon(
-                              Icons.search,
-                            ),
+                          controller: searchController,
 
-                            border:
-                            InputBorder.none,
+                          onChanged: (value) {
+
+                            _debounce?.cancel();
+
+                            _debounce = Timer(
+                              const Duration(milliseconds: 500),
+                                  () {
+
+                                if (value.trim().isEmpty) {
+
+                                  setState(() {
+                                    isSearching = false;
+                                  });
+
+                                  context
+                                      .read<MemberCubit>()
+                                      .getAllMembers(
+                                    isRefresh: true,
+                                  );
+
+                                  return;
+                                }
+
+                                setState(() {
+                                  isSearching = true;
+                                });
+
+                                context
+                                    .read<SearchMemberCubit>()
+                                    .searchMembers(
+                                  keyword: value,
+                                );
+                              },
+                            );
+                          },
+
+                          decoration: const InputDecoration(
+                            hintText: "Search member...",
+                            prefixIcon: Icon(Icons.search),
+                            border: InputBorder.none,
                           ),
                         ),
                       ),
@@ -373,6 +422,39 @@ class _MemberDetailsPageState
     required double Function(double) h,
   }) {
 
+    if (isSearching) {
+
+      return BlocBuilder<
+          SearchMemberCubit,
+          SearchMemberState>(
+        builder: (context, state) {
+
+          if (state is SearchMemberLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (state is SearchMemberError) {
+            return Center(
+              child: Text(state.message),
+            );
+          }
+
+          if (state is SearchMemberLoaded) {
+
+            return _memberListView(
+              members:
+              state.response.data ?? [],
+              isTablet: isTablet,
+              isLoadingMore: false,
+            );
+          }
+
+          return const SizedBox();
+        },
+      );
+    }
     /// ================= ALL =================
 
     if (selectedTab == 0) {
@@ -778,8 +860,18 @@ class _MemberDetailsPageState
 
           onEdit: () {
 
-            /// EDIT MEMBER
-          },
+
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddMemberPage(
+                    member: member,
+                  ),
+                ),
+              );
+            },
+
 
           onDelete: () {
 

@@ -7,7 +7,9 @@ class GymProfileResponse {
     this.data,
   });
 
-  factory GymProfileResponse.fromJson(Map<String, dynamic> json) {
+  factory GymProfileResponse.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return GymProfileResponse(
       success: json['success'],
       data: json['data'] != null
@@ -36,8 +38,8 @@ class GymData {
   final String? description;
   final String? openingTime;
   final String? closingTime;
-  final String? createdAt;
-  final String? updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final int? v;
 
   GymData({
@@ -57,7 +59,9 @@ class GymData {
     this.v,
   });
 
-  factory GymData.fromJson(Map<String, dynamic> json) {
+  factory GymData.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return GymData(
       id: json['_id'],
       owner: json['owner'] != null
@@ -72,8 +76,12 @@ class GymData {
       description: json['description'],
       openingTime: json['openingTime'],
       closingTime: json['closingTime'],
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : null,
       v: json['__v'],
     );
   }
@@ -91,8 +99,8 @@ class GymData {
       'description': description,
       'openingTime': openingTime,
       'closingTime': closingTime,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
       '__v': v,
     };
   }
@@ -102,7 +110,7 @@ class Owner {
   final String? id;
   final String? name;
   final String? email;
-  final int? mobNo;
+  final String? mobNo;
   final String? role;
 
   Owner({
@@ -113,12 +121,14 @@ class Owner {
     this.role,
   });
 
-  factory Owner.fromJson(Map<String, dynamic> json) {
+  factory Owner.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return Owner(
       id: json['_id'],
       name: json['name'],
       email: json['email'],
-      mobNo: json['mobNo'],
+      mobNo: json['mobNo']?.toString(),
       role: json['role'],
     );
   }

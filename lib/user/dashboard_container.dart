@@ -3,6 +3,7 @@ import 'package:zymmanagement/user/features/home/presentation/pages/user_home_pa
 import 'package:zymmanagement/user/features/profile/presentation/pages/user_profile_page.dart';
 import 'package:zymmanagement/user/user_bottom_navbar.dart';
 import '../theme/app_colors.dart';
+import 'api_service/fcm_service.dart';
 
 class DashboardContainer extends StatefulWidget {
   const DashboardContainer({super.key});
@@ -13,6 +14,18 @@ class DashboardContainer extends StatefulWidget {
 
 class _DashboardContainerState extends State<DashboardContainer> {
   int selectedIndex = 0;
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+
+      await FCMService.initialize();
+
+    });
+  }
 
   final List<Widget> screens = [
     const UserHomePage(),
@@ -83,24 +96,3 @@ class _DashboardContainerState extends State<DashboardContainer> {
   }
 }
 
-class DummyPage extends StatelessWidget {
-  final String title;
-
-  const DummyPage({
-    super.key,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}

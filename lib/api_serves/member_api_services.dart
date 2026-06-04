@@ -102,6 +102,47 @@ class MemberApiServices {
   }
 
 
+  static Future<String> updateMember({
+    required String memberId,
+    required FormData formData,
+  }) async {
+
+    try {
+
+      final Response response =
+      await DioClient.dio.put(
+        "/members/update/$memberId",
+        data: formData,
+      );
+
+      final data = response.data;
+
+      if ((response.statusCode == 200 ||
+          response.statusCode == 201) &&
+          data["success"] == true) {
+
+        return data["message"] ??
+            "Member updated successfully";
+      }
+
+      throw Exception(
+        data["message"] ??
+            "Failed to update member",
+      );
+
+    } on DioException catch (e) {
+
+      throw Exception(
+
+        e.response?.data?["message"] ??
+
+            e.message ??
+
+            "Something went wrong",
+      );
+    }
+  }
+
 
 
 }

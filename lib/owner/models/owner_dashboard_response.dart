@@ -68,7 +68,7 @@ class OwnerModel {
   final String? id;
   final String? name;
   final String? email;
-  final int? mobNo;
+  final String? mobNo;
   final String? role;
 
   OwnerModel({
@@ -79,9 +79,8 @@ class OwnerModel {
     this.role,
   });
 
-  factory OwnerModel.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory OwnerModel.fromJson(Map<String, dynamic> json) {
+
     return OwnerModel(
       id: json["_id"],
       name: json["name"],

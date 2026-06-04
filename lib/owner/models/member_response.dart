@@ -165,7 +165,6 @@ class PaginationModel {
 /// =================================
 
 class MemberData {
-
   final String id;
 
   final UserModel? user;
@@ -173,6 +172,10 @@ class MemberData {
   final String owner;
 
   final String gym;
+
+  final String name;
+
+  final String mobNo;
 
   final int age;
 
@@ -187,6 +190,8 @@ class MemberData {
   final String memberStatus;
 
   final String qrToken;
+
+  final DateTime? lastAttendanceDate;
 
   final bool isDeleted;
 
@@ -203,6 +208,8 @@ class MemberData {
     this.user,
     this.owner = "",
     this.gym = "",
+    this.name = "",
+    this.mobNo = "",
     this.age = 0,
     this.aadhaarNo = "",
     this.profilePhoto = "",
@@ -210,6 +217,7 @@ class MemberData {
     this.expiryDate,
     this.memberStatus = "",
     this.qrToken = "",
+    this.lastAttendanceDate,
     this.isDeleted = false,
     this.joiningDate,
     this.createdAt,
@@ -220,90 +228,66 @@ class MemberData {
   factory MemberData.fromJson(
       Map<String, dynamic> json,
       ) {
-
     return MemberData(
+      id: json["_id"]?.toString() ?? "",
 
-      id:
-      json["_id"]
-          ?.toString() ??
-          "",
-
-      user:
-      json["user"]
-      is Map<String, dynamic>
+      user: json["user"] is Map<String, dynamic>
           ? UserModel.fromJson(
         json["user"],
       )
           : null,
 
-      owner:
-      json["owner"]
-          ?.toString() ??
-          "",
+      owner: json["owner"]?.toString() ?? "",
 
-      gym:
-      json["gym"]
-          ?.toString() ??
-          "",
+      gym: json["gym"]?.toString() ?? "",
 
-      age:
-      (json["age"]
-      as num?)
-          ?.toInt() ??
-          0,
+      name: json["name"]?.toString() ?? "",
 
-      aadhaarNo:
-      json["aadhaarNo"]
-          ?.toString() ??
-          "",
+      mobNo: json["mobNo"]?.toString() ?? "",
 
-      /// SAFE PROFILE IMAGE
+      age: (json["age"] as num?)?.toInt() ?? 0,
+
+      aadhaarNo: json["aadhaarNo"]?.toString() ?? "",
+
       profilePhoto:
-      (json["profilePhoto"] !=
-          null &&
+      (json["profilePhoto"] != null &&
           json["profilePhoto"]
               .toString()
               .trim()
               .isNotEmpty)
-          ? json["profilePhoto"]
-          .toString()
+          ? json["profilePhoto"].toString()
           : "",
 
-      plan:
-      json["plan"]
-      is Map<String, dynamic>
+      plan: json["plan"] is Map<String, dynamic>
           ? PlanModel.fromJson(
         json["plan"],
       )
           : null,
 
-      expiryDate:
-      json["expiryDate"] !=
-          null
+      expiryDate: json["expiryDate"] != null
           ? DateTime.tryParse(
-        json["expiryDate"]
-            .toString(),
+        json["expiryDate"].toString(),
       )
           : null,
 
       memberStatus:
-      json["memberStatus"]
-          ?.toString() ??
-          "",
+      json["memberStatus"]?.toString() ?? "",
 
-      qrToken:
-      json["qrToken"]
-          ?.toString() ??
-          "",
+      qrToken: json["qrToken"]?.toString() ?? "",
+
+      lastAttendanceDate:
+      json["lastAttendanceDate"] != null
+          ? DateTime.tryParse(
+        json["lastAttendanceDate"]
+            .toString(),
+      )
+          : null,
 
       isDeleted:
-      json["isDeleted"]
-      as bool? ??
-          false,
+      json["isDeleted"] as bool? ?? false,
 
       joiningDate:
-      json["joiningDate"] !=
-          null
+      json["joiningDate"] != null
           ? DateTime.tryParse(
         json["joiningDate"]
             .toString(),
@@ -311,8 +295,7 @@ class MemberData {
           : null,
 
       createdAt:
-      json["createdAt"] !=
-          null
+      json["createdAt"] != null
           ? DateTime.tryParse(
         json["createdAt"]
             .toString(),
@@ -320,76 +303,61 @@ class MemberData {
           : null,
 
       updatedAt:
-      json["updatedAt"] !=
-          null
+      json["updatedAt"] != null
           ? DateTime.tryParse(
         json["updatedAt"]
             .toString(),
       )
           : null,
 
-      v:
-      (json["__v"]
-      as num?)
-          ?.toInt() ??
-          0,
+      v: (json["__v"] as num?)?.toInt() ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() {
-
     return {
-
       "_id": id,
 
-      "user":
-      user?.toJson(),
+      "user": user?.toJson(),
 
-      "owner":
-      owner,
+      "owner": owner,
 
-      "gym":
-      gym,
+      "gym": gym,
 
-      "age":
-      age,
+      "name": name,
 
-      "aadhaarNo":
-      aadhaarNo,
+      "mobNo": mobNo,
 
-      "profilePhoto":
-      profilePhoto,
+      "age": age,
 
-      "plan":
-      plan?.toJson(),
+      "aadhaarNo": aadhaarNo,
+
+      "profilePhoto": profilePhoto,
+
+      "plan": plan?.toJson(),
 
       "expiryDate":
-      expiryDate
-          ?.toIso8601String(),
+      expiryDate?.toIso8601String(),
 
-      "memberStatus":
-      memberStatus,
+      "memberStatus": memberStatus,
 
-      "qrToken":
-      qrToken,
+      "qrToken": qrToken,
 
-      "isDeleted":
-      isDeleted,
+      "lastAttendanceDate":
+      lastAttendanceDate?.toIso8601String(),
+
+      "isDeleted": isDeleted,
 
       "joiningDate":
-      joiningDate
-          ?.toIso8601String(),
+      joiningDate?.toIso8601String(),
 
       "createdAt":
-      createdAt
-          ?.toIso8601String(),
+      createdAt?.toIso8601String(),
 
       "updatedAt":
-      updatedAt
-          ?.toIso8601String(),
+      updatedAt?.toIso8601String(),
 
-      "__v":
-      v,
+      "__v": v,
     };
   }
 }

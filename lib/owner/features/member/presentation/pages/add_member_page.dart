@@ -9,9 +9,17 @@ import '../../../plan/presentation/cubit/plan_state.dart';
 import '../cubit/member_cubit.dart';
 import '../cubit/member_state.dart';
 import 'member_details_page.dart';
+import '../../../../../owner/models/member_response.dart';
+
 
 class AddMemberPage extends StatefulWidget {
-  const AddMemberPage({super.key});
+
+  final MemberData? member;
+
+  const AddMemberPage({
+    super.key,
+    this.member,
+  });
 
   @override
   State<AddMemberPage> createState() =>
@@ -20,6 +28,11 @@ class AddMemberPage extends StatefulWidget {
 
 class _AddMemberPageState
     extends State<AddMemberPage> {
+
+  bool get isEdit =>
+      widget.member != null;
+
+
   /// FORM KEY
   final GlobalKey<FormState> formKey =
   GlobalKey<FormState>();
@@ -65,10 +78,33 @@ class _AddMemberPageState
   void initState() {
     super.initState();
 
-    /// GET ALL PLANS
-    context
-        .read<PlanCubit>()
-        .getAllPlans();
+    context.read<PlanCubit>().getAllPlans();
+
+    if (widget.member != null) {
+
+      nameController.text =
+          widget.member!.user?.name?? "";
+
+      emailController.text =
+          widget.member!.user?.email ?? "";
+
+      mobileController.text =
+          widget.member!.mobNo ?? "";
+
+      ageController.text =
+          widget.member!.age?.toString() ?? "";
+
+      aadhaarController.text =
+          widget.member!.aadhaarNo ?? "";
+
+      selectedPlanId =
+          widget.member!.plan?.id;
+
+      selectedPlanName =
+          widget.member!.plan?.planName;
+
+      widget.member?.profilePhoto;
+    }
   }
 
 
@@ -136,8 +172,10 @@ class _AddMemberPageState
           backgroundColor:
           AppColors.background,
 
-          title: const Text(
-            "Add New Member",
+          title: Text(
+            isEdit
+                ? "Edit Member"
+                : "Add New Member",
 
             style: TextStyle(
               color: Colors.black,
@@ -297,7 +335,7 @@ class _AddMemberPageState
                   SizedBox(height: h(16)),
 
                   /// PASSWORD
-                  /// PASSWORD
+           if (!isEdit) ...[
                   TextFormField(
                     controller: passwordController,
 
@@ -382,6 +420,8 @@ class _AddMemberPageState
 
                   SizedBox(height: h(16)),
 
+                  ],
+
                   /// AGE
                   customTextField(
                     controller:
@@ -405,6 +445,7 @@ class _AddMemberPageState
                   ),
 
                   SizedBox(height: h(16)),
+
 
                   /// ADDRESS
                   customTextField(
@@ -597,52 +638,84 @@ class _AddMemberPageState
                                 .currentState!
                                 .validate()) {
 
-                              context
-                                  .read<
-                                  MemberCubit
-                              >()
-                                  .addMember(
+                              if (isEdit) {
 
-                                name:
-                                nameController
-                                    .text
-                                    .trim(),
+                                context
+                                    .read<MemberCubit>()
+                                    .updateMember(
 
-                                age:
-                                ageController
-                                    .text
-                                    .trim(),
+                                  memberId:
+                                  widget.member!.id!,
 
-                                mobNo:
-                                mobileController
-                                    .text
-                                    .trim(),
+                                  name:
+                                  nameController.text.trim(),
 
-                                aadhaarNo:
-                                aadhaarController
-                                    .text
-                                    .trim(),
+                                  age:
+                                  ageController.text.trim(),
 
-                                email:
-                                emailController
-                                    .text
-                                    .trim(),
+                                  mobNo:
+                                  mobileController.text.trim(),
 
-                                password:
-                                passwordController
-                                    .text
-                                    .trim(),
+                                  aadhaarNo:
+                                  aadhaarController.text.trim(),
 
-                                planId:
-                                selectedPlanId ??
-                                    "",
+                                  email:
+                                  emailController.text.trim(),
 
-                                profilePhoto:
-                                profileImage,
-                              );
+                                  planId:
+                                  selectedPlanId ?? "",
+
+                                  profilePhoto:
+                                  profileImage,
+                                );
+
+                              } else{
+                                context
+                                    .read<
+                                    MemberCubit
+                                >()
+                                    .addMember(
+
+                                  name:
+                                  nameController
+                                      .text
+                                      .trim(),
+
+                                  age:
+                                  ageController
+                                      .text
+                                      .trim(),
+
+                                  mobNo:
+                                  mobileController
+                                      .text
+                                      .trim(),
+
+                                  aadhaarNo:
+                                  aadhaarController
+                                      .text
+                                      .trim(),
+
+                                  email:
+                                  emailController
+                                      .text
+                                      .trim(),
+
+                                  password:
+                                  passwordController
+                                      .text
+                                      .trim(),
+
+                                  planId:
+                                  selectedPlanId ??
+                                      "",
+
+                                  profilePhoto:
+                                  profileImage,
+                                );
+                              }
                             }
                           },
-
                           child:
                           isLoading
                               ? const CircularProgressIndicator(
@@ -650,8 +723,10 @@ class _AddMemberPageState
                             Colors
                                 .white,
                           )
-                              : const Text(
-                            "Save Member",
+                              :  Text(
+                            isEdit
+                                ? "Update Member"
+                                : "Save Member",
 
                             style: TextStyle(
                               fontSize:

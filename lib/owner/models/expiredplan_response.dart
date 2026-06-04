@@ -85,6 +85,10 @@ class ExpiredMemberData {
   final ExpiredUser? user;
   final String? owner;
   final String? gym;
+
+  final String? name;
+  final String? mobNo;
+
   final int? age;
   final String? aadhaarNo;
   final String? profilePhoto;
@@ -104,6 +108,8 @@ class ExpiredMemberData {
     this.user,
     this.owner,
     this.gym,
+    this.name,
+    this.mobNo,
     this.age,
     this.aadhaarNo,
     this.profilePhoto,
@@ -125,44 +131,46 @@ class ExpiredMemberData {
     return ExpiredMemberData(
       id: json['_id'],
       user: json['user'] != null
-          ? ExpiredUser.fromJson(
-        json['user'],
-      )
+          ? ExpiredUser.fromJson(json['user'])
           : null,
       owner: json['owner'],
       gym: json['gym'],
+
+      name: json['name'],
+      mobNo: json['mobNo']?.toString(),
+
       age: json['age'],
       aadhaarNo: json['aadhaarNo'],
       profilePhoto: json['profilePhoto'],
+
       plan: json['plan'] != null
           ? ExpiredPlanDetails.fromJson(
         json['plan'],
       )
           : null,
+
       expiryDate: json['expiryDate'] != null
-          ? DateTime.parse(
-        json['expiryDate'],
-      )
+          ? DateTime.parse(json['expiryDate'])
           : null,
+
       memberStatus: json['memberStatus'],
       qrToken: json['qrToken'],
       isDeleted: json['isDeleted'],
+
       joiningDate: json['joiningDate'] != null
-          ? DateTime.parse(
-        json['joiningDate'],
-      )
+          ? DateTime.parse(json['joiningDate'])
           : null,
+
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(
-        json['createdAt'],
-      )
+          ? DateTime.parse(json['createdAt'])
           : null,
+
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(
-        json['updatedAt'],
-      )
+          ? DateTime.parse(json['updatedAt'])
           : null,
+
       v: json['__v'],
+
       lastAttendanceDate:
       json['lastAttendanceDate'] != null
           ? DateTime.parse(
@@ -178,25 +186,22 @@ class ExpiredMemberData {
       'user': user?.toJson(),
       'owner': owner,
       'gym': gym,
+      'name': name,
+      'mobNo': mobNo,
       'age': age,
       'aadhaarNo': aadhaarNo,
       'profilePhoto': profilePhoto,
       'plan': plan?.toJson(),
-      'expiryDate':
-      expiryDate?.toIso8601String(),
+      'expiryDate': expiryDate?.toIso8601String(),
       'memberStatus': memberStatus,
       'qrToken': qrToken,
       'isDeleted': isDeleted,
-      'joiningDate':
-      joiningDate?.toIso8601String(),
-      'createdAt':
-      createdAt?.toIso8601String(),
-      'updatedAt':
-      updatedAt?.toIso8601String(),
+      'joiningDate': joiningDate?.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
       '__v': v,
       'lastAttendanceDate':
-      lastAttendanceDate
-          ?.toIso8601String(),
+      lastAttendanceDate?.toIso8601String(),
     };
   }
 }
@@ -205,7 +210,7 @@ class ExpiredUser {
   final String? id;
   final String? name;
   final String? email;
-  final int? mobNo;
+  final String? mobNo;
   final String? role;
 
   ExpiredUser({
@@ -223,7 +228,7 @@ class ExpiredUser {
       id: json['_id'],
       name: json['name'],
       email: json['email'],
-      mobNo: json['mobNo'],
+      mobNo: json['mobNo']?.toString(),
       role: json['role'],
     );
   }

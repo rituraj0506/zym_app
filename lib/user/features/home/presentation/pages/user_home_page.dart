@@ -1,7 +1,9 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../api_service/fcm_service.dart';
 import '../cubit/user_dashboard_cubit.dart';
 import '../cubit/user_dashboard_state.dart';
 
@@ -24,6 +26,9 @@ class _UserHomePageState
         .read<UserDashboardCubit>()
         .fetchUserDashboard();
   }
+
+
+
 
   bool get isTablet {
 
@@ -270,13 +275,18 @@ class _UserHomePageState
                                 child: Stack(
                                   children: [
 
-                                    const Center(
-                                      child: Icon(
-                                        Icons
-                                            .notifications_none_rounded,
+                                    InkWell(
+                                      onTap: () async {
 
-                                        size:
-                                        28,
+                                      },
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons
+                                              .notifications_none_rounded,
+
+                                          size:
+                                          28,
+                                        ),
                                       ),
                                     ),
 

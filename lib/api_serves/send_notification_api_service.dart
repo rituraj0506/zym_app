@@ -1,0 +1,46 @@
+import 'package:dio/dio.dart';
+
+import '../network/dio_client.dart';
+
+class SendNotificationApiService {
+  static Future<String> sendNotification({
+    required String title,
+    required String message,
+    required String targetType,
+    List<String>? customMembers,
+  }) async {
+    try {
+      final response = await DioClient.dio.post(
+        "/notification/send",
+        data: {
+          "title": title,
+          "message": message,
+          "targetType": targetType,
+          if (customMembers != null &&
+              customMembers.isNotEmpty)
+            "customMembers": customMembers,
+        },
+      );
+
+      final data = response.data;
+
+      if ((response.statusCode == 200 ||
+          response.statusCode == 201) &&
+          data["success"] == true) {
+        return data["message"] ??
+            "Notification sent successfully";
+      }
+
+      throw Exception(
+        data["message"] ??
+            "Failed to send notification",
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data["message"] ??
+            e.message ??
+            "Something went wrong",
+      );
+    }
+  }
+}

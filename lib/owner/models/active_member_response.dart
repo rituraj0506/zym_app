@@ -191,7 +191,7 @@ class User {
   final String? id;
   final String? name;
   final String? email;
-  final int? mobNo;
+  final String? mobNo;
   final String? role;
 
   User({
@@ -209,7 +209,7 @@ class User {
       id: json['_id'],
       name: json['name'],
       email: json['email'],
-      mobNo: json['mobNo'],
+      mobNo: json["mobNo"]?.toString(),
       role: json['role'],
     );
   }

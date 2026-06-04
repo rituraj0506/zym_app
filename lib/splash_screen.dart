@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
 import 'network/secure_storge.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -27,6 +26,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final role =
     await SecureStorageService.getRole();
+
+    // /// User already logged in
+    // if (token != null && token.isNotEmpty) {
+    //
+    //   // FCM token save/update
+    //   await FCMService.initialize();
+    // }
 
     /// Splash delay
     await Future.delayed(
@@ -70,16 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
 
-  // void initState() {
-  //   super.initState();
-  //
-  //   Timer(
-  //     const Duration(seconds: 2),
-  //         () {
-  //       Navigator.pushReplacementNamed(context, '/login');
-  //     },
-  //   );
-  // }
+
 
 
   @override
