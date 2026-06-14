@@ -318,4 +318,11 @@ class ExpiredPlanCubit
 
     await fetchAll();
   }
+
+
+  void clearMemberShip() {
+    emit(ExpiredPlanInitial());
+  }
+
+
 }

@@ -30,6 +30,7 @@ class _RenewMemberPageState
     extends State<RenewMemberPage> {
 
   String selectedPlanId = "";
+  String selectedPaymentMode = "cash";
 
   @override
   Widget build(BuildContext context) {
@@ -620,9 +621,48 @@ class _RenewMemberPageState
                     ),
                   ),
 
-                  const SizedBox(
-                    height: 14,
+                  DropdownButtonFormField<String>(
+                    value: selectedPaymentMode,
+
+                    decoration: InputDecoration(
+                      labelText: "Payment Mode",
+
+                      border: OutlineInputBorder(
+                        borderRadius:
+                        BorderRadius.circular(16),
+                      ),
+                    ),
+
+                    items: const [
+
+                      DropdownMenuItem(
+                        value: "cash",
+                        child: Text("Cash"),
+                      ),
+
+                      DropdownMenuItem(
+                        value: "upi",
+                        child: Text("UPI"),
+                      ),
+
+                      DropdownMenuItem(
+                        value: "bank",
+                        child: Text("Bank Transfer"),
+                      ),
+                    ],
+
+                    onChanged: (value) {
+
+                      setState(() {
+
+                        selectedPaymentMode = value!;
+
+                      });
+
+                    },
                   ),
+
+                  const SizedBox(height: 14),
 
                   /// BUTTON
                   SizedBox(
@@ -690,6 +730,10 @@ class _RenewMemberPageState
 
                           planId:
                           selectedPlanId,
+
+
+                          paymentMode:
+                          selectedPaymentMode,
                         );
                       },
 

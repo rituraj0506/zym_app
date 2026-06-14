@@ -8,7 +8,7 @@ class RenewMemberApiServices {
 
     required String memberId,
     required String planId,
-
+    required String paymentMode,
   }) async {
 
     try {
@@ -19,7 +19,7 @@ class RenewMemberApiServices {
         "/members/renew-member/$memberId",
 
         data: {
-
+          "paymentMode" : paymentMode,
           "planId": planId,
         },
       );

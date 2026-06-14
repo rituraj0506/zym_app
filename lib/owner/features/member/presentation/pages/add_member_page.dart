@@ -32,6 +32,7 @@ class _AddMemberPageState
   bool get isEdit =>
       widget.member != null;
 
+  String selectedPaymentMode = "cash";
 
   /// FORM KEY
   final GlobalKey<FormState> formKey =
@@ -97,6 +98,8 @@ class _AddMemberPageState
       aadhaarController.text =
           widget.member!.aadhaarNo ?? "";
 
+
+
       selectedPlanId =
           widget.member!.plan?.id;
 
@@ -108,6 +111,21 @@ class _AddMemberPageState
   }
 
 
+  bool get canEditPlan {
+
+    if (!isEdit) return true;
+
+    final createdAt = widget.member?.createdAt;
+
+    if (createdAt == null) {
+      return false;
+    }
+
+    final diff =
+    DateTime.now().difference(createdAt);
+
+    return diff.inHours <= 24;
+  }
 
   /// PICK IMAGE
   Future<void> pickImage() async {
@@ -206,22 +224,25 @@ class _AddMemberPageState
 
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color:
-                            Colors.grey.shade200,
+                            color: Colors.grey.shade200,
 
-                            image:
-                            profileImage != null
+                            image: profileImage != null
                                 ? DecorationImage(
-                              image: FileImage(
-                                profileImage!,
+                              image: FileImage(profileImage!),
+                              fit: BoxFit.cover,
+                            )
+                                : widget.member?.profilePhoto != null
+                                ? DecorationImage(
+                              image: NetworkImage(
+                                widget.member!.profilePhoto!,
                               ),
                               fit: BoxFit.cover,
                             )
                                 : null,
                           ),
 
-                          child:
-                          profileImage == null
+                          child: profileImage == null &&
+                              widget.member?.profilePhoto == null
                               ? Icon(
                             Icons.person,
                             size: h(55),
@@ -448,6 +469,7 @@ class _AddMemberPageState
 
 
                   /// ADDRESS
+        if (!isEdit) ...[
                   customTextField(
                     controller:
                     addressController,
@@ -455,7 +477,45 @@ class _AddMemberPageState
                     maxLines: 3,
                   ),
 
+                  ],
+
                   SizedBox(height: h(16)),
+
+                  // Plan dropdown
+                  if (!isEdit) ...[
+                    DropdownButtonFormField<String>(
+                      value: selectedPaymentMode,
+                      decoration: InputDecoration(
+                        hintText: "Payment Mode",
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: "cash",
+                          child: Text("Cash"),
+                        ),
+                        DropdownMenuItem(
+                          value: "upi",
+                          child: Text("UPI"),
+                        ),
+                        DropdownMenuItem(
+                          value: "bank",
+                          child: Text("Bank Transfer"),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedPaymentMode = value!;
+                        });
+                      },
+                    ),
+
+                    SizedBox(height: h(16)),
+                  ],
 
                   /// PLAN DROPDOWN
                   BlocBuilder<
@@ -474,107 +534,186 @@ class _AddMemberPageState
                       }
 
                       /// SUCCESS
-                      if (state
-                      is PlanDetailsLoaded) {
-                          plans = state.plans.data ?? [];
+                      // if (state
+                      // is PlanDetailsLoaded) {
+                      //     plans = state.plans.data ?? [];
+                      //
+                      //   return DropdownButtonFormField<
+                      //       String
+                      //   >(
+                      //     value:
+                      //     selectedPlanId,
+                      //
+                      //     decoration:
+                      //     InputDecoration(
+                      //       hintText:
+                      //       "Select Plan",
+                      //
+                      //       filled: true,
+                      //       fillColor:
+                      //       Colors.white,
+                      //
+                      //       border: OutlineInputBorder(
+                      //         borderRadius:
+                      //         BorderRadius.circular(
+                      //           14,
+                      //         ),
+                      //       ),
+                      //
+                      //       enabledBorder: OutlineInputBorder(
+                      //         borderRadius:
+                      //         BorderRadius.circular(
+                      //           14,
+                      //         ),
+                      //
+                      //         borderSide: BorderSide(
+                      //           color:
+                      //           Colors
+                      //               .grey
+                      //               .shade300,
+                      //         ),
+                      //       ),
+                      //
+                      //       focusedBorder: OutlineInputBorder(
+                      //         borderRadius:
+                      //         BorderRadius.circular(
+                      //           14,
+                      //         ),
+                      //
+                      //         borderSide: const BorderSide(
+                      //           color:
+                      //           AppColors
+                      //               .primary,
+                      //           width:
+                      //           1.5,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //
+                      //     items:
+                      //     plans.map((
+                      //         plan,
+                      //         ) {
+                      //       return DropdownMenuItem<
+                      //           String
+                      //       >(
+                      //         value:
+                      //         plan.id,
+                      //
+                      //         child: Text(
+                      //           plan.planName ??
+                      //               "",
+                      //         ),
+                      //       );
+                      //     }).toList(),
+                      //
+                      //     onChanged: (
+                      //         value,
+                      //         ) {
+                      //       final selectedPlan =
+                      //       plans.firstWhere(
+                      //             (
+                      //             e,
+                      //             ) =>
+                      //         e.id ==
+                      //             value,
+                      //       );
+                      //
+                      //       setState(() {
+                      //         selectedPlanId =
+                      //             selectedPlan
+                      //                 .id;
+                      //
+                      //         selectedPlanName =
+                      //             selectedPlan
+                      //                 .planName;
+                      //       });
+                      //     },
+                      //
+                      //     validator: (
+                      //         value,
+                      //         ) {
+                      //       if (value ==
+                      //           null) {
+                      //         return "Please select plan";
+                      //       }
+                      //
+                      //       return null;
+                      //     },
+                      //   );
+                      // }
 
-                        return DropdownButtonFormField<
-                            String
-                        >(
-                          value:
-                          selectedPlanId,
+                      if (state is PlanDetailsLoaded) {
 
-                          decoration:
-                          InputDecoration(
-                            hintText:
-                            "Select Plan",
+                        plans = state.plans.data ?? [];
 
+                        if (isEdit && !canEditPlan) {
+
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 18,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius:
+                              BorderRadius.circular(14),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            child: Text(
+                              selectedPlanName ?? "No Plan",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return DropdownButtonFormField<String>(
+                          value: selectedPlanId,
+
+                          decoration: InputDecoration(
+                            hintText: "Select Plan",
                             filled: true,
-                            fillColor:
-                            Colors.white,
+                            fillColor: Colors.white,
 
                             border: OutlineInputBorder(
                               borderRadius:
-                              BorderRadius.circular(
-                                14,
-                              ),
-                            ),
-
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius:
-                              BorderRadius.circular(
-                                14,
-                              ),
-
-                              borderSide: BorderSide(
-                                color:
-                                Colors
-                                    .grey
-                                    .shade300,
-                              ),
-                            ),
-
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius:
-                              BorderRadius.circular(
-                                14,
-                              ),
-
-                              borderSide: const BorderSide(
-                                color:
-                                AppColors
-                                    .primary,
-                                width:
-                                1.5,
-                              ),
+                              BorderRadius.circular(14),
                             ),
                           ),
 
-                          items:
-                          plans.map((
-                              plan,
-                              ) {
-                            return DropdownMenuItem<
-                                String
-                            >(
-                              value:
-                              plan.id,
-
+                          items: plans.map((plan) {
+                            return DropdownMenuItem<String>(
+                              value: plan.id,
                               child: Text(
-                                plan.planName ??
-                                    "",
+                                plan.planName ?? "",
                               ),
                             );
                           }).toList(),
 
-                          onChanged: (
-                              value,
-                              ) {
+                          onChanged: (value) {
+
                             final selectedPlan =
                             plans.firstWhere(
-                                  (
-                                  e,
-                                  ) =>
-                              e.id ==
-                                  value,
+                                  (e) => e.id == value,
                             );
 
                             setState(() {
                               selectedPlanId =
-                                  selectedPlan
-                                      .id;
+                                  selectedPlan.id;
 
                               selectedPlanName =
-                                  selectedPlan
-                                      .planName;
+                                  selectedPlan.planName;
                             });
                           },
 
-                          validator: (
-                              value,
-                              ) {
-                            if (value ==
-                                null) {
+                          validator: (value) {
+
+                            if (value == null) {
                               return "Please select plan";
                             }
 
@@ -637,9 +776,7 @@ class _AddMemberPageState
                             if (formKey
                                 .currentState!
                                 .validate()) {
-
                               if (isEdit) {
-
                                 context
                                     .read<MemberCubit>()
                                     .updateMember(
@@ -668,53 +805,42 @@ class _AddMemberPageState
                                   profilePhoto:
                                   profileImage,
                                 );
-
-                              } else{
+                              }
+                              else {
                                 context
-                                    .read<
-                                    MemberCubit
-                                >()
+                                    .read<MemberCubit>()
                                     .addMember(
 
                                   name:
-                                  nameController
-                                      .text
-                                      .trim(),
+                                  nameController.text.trim(),
 
                                   age:
-                                  ageController
-                                      .text
-                                      .trim(),
+                                  ageController.text.trim(),
 
                                   mobNo:
-                                  mobileController
-                                      .text
-                                      .trim(),
+                                  mobileController.text.trim(),
 
                                   aadhaarNo:
-                                  aadhaarController
-                                      .text
-                                      .trim(),
+                                  aadhaarController.text.trim(),
 
                                   email:
-                                  emailController
-                                      .text
-                                      .trim(),
+                                  emailController.text.trim(),
 
                                   password:
-                                  passwordController
-                                      .text
-                                      .trim(),
+                                  passwordController.text.trim(),
 
                                   planId:
-                                  selectedPlanId ??
-                                      "",
+                                  selectedPlanId ?? "",
+
+                                  paymentMode:
+                                  selectedPaymentMode,
 
                                   profilePhoto:
                                   profileImage,
                                 );
                               }
                             }
+
                           },
                           child:
                           isLoading
@@ -820,4 +946,8 @@ class _AddMemberPageState
       ),
     );
   }
+
+
+
+
 }

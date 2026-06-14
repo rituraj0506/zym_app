@@ -7,7 +7,9 @@ import 'package:zymmanagement/owner/dashboard_screen.dart';
 import 'package:zymmanagement/owner/features/attendance/presentation/cubit/attendance_by_date_cubit.dart';
 import 'package:zymmanagement/owner/features/attendance/presentation/cubit/attendance_cubit.dart';
 import 'package:zymmanagement/owner/features/expiredplan/presentation/cubit/expired_plan_cubit.dart';
+import 'package:zymmanagement/owner/features/fee/cubit/transaction_details_cubit.dart';
 import 'package:zymmanagement/owner/features/member/presentation/cubit/search_member_cubit.dart';
+import 'package:zymmanagement/owner/features/fee/cubit/member_fee_cubit.dart';
 import 'package:zymmanagement/owner/features/qr/presentation/cubit/scan_qr_cubit.dart';
 import 'package:zymmanagement/owner/features/sendnotification/presentation/cubit/send_notification_cubit.dart';
 import 'package:zymmanagement/splash_screen.dart';
@@ -174,6 +176,14 @@ class MyApp extends StatelessWidget {
 
         BlocProvider(
           create: (_) => SendNotificationCubit(),
+        ),
+
+        BlocProvider(
+          create: (_) => MemberFeeCubit(),
+        ),
+
+        BlocProvider(
+          create: (_) => TransactionDetailsCubit(),
         ),
       ],
 

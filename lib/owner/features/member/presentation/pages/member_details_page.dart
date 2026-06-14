@@ -3,17 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../../theme/app_colors.dart';
+import '../../../fee/cubit/member_fee_cubit.dart';
+import '../../../fee/cubit/member_fee_state.dart';
 import '../cubit/member_cubit.dart';
 import '../cubit/member_state.dart';
 import '../cubit/active_member_cubit.dart';
 import '../cubit/active_member_state.dart';
 import '../cubit/inactive_member_cubit.dart';
 import '../cubit/inactive_member_state.dart';
-
 import '../cubit/search_member_cubit.dart';
 import '../cubit/search_member_state.dart';
 import 'add_member_page.dart';
 import 'member_tile.dart';
+
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 
 class MemberDetailsPage extends StatefulWidget {
   const MemberDetailsPage({
@@ -105,7 +111,7 @@ class _MemberDetailsPageState
     }
   }
 
-  @override
+
   @override
   void dispose() {
 
@@ -118,14 +124,13 @@ class _MemberDetailsPageState
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
 
-    final size =
-        MediaQuery.of(context).size;
+    final size = MediaQuery.of(context).size;
 
-    final bool isTablet =
-        size.width > 700;
+    final bool isTablet = size.width > 700;
 
     double w(double value) =>
         size.width * (value / 390);
@@ -133,58 +138,204 @@ class _MemberDetailsPageState
     double h(double value) =>
         size.height * (value / 844);
 
-    return Scaffold(
+    return BlocListener<
+        MemberFeeCubit,
+        MemberFeeState>(
+      listener: (context, state) async {
 
-      backgroundColor:
-      AppColors.background,
+        if (state is MemberFeeLoading) {
 
-      body: SafeArea(
-        child: Center(
-          child: Container(
-
-            constraints: BoxConstraints(
-              maxWidth:
-              isTablet
-                  ? 650
-                  : double.infinity,
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Generating PDF...",
+              ),
             ),
+          );
+        }
 
-            padding:
-            EdgeInsets.all(w(18)),
+        if (state is PdfDownloadedState) {
 
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+          final dir =
+          await getTemporaryDirectory();
 
-              children: [
+          final file = File(
+            "${dir.path}/receipt.pdf",
+          );
 
-                /// TITLE
-                Text(
-                  "Members",
+          await file.writeAsBytes(
+            state.pdfBytes,
+          );
 
-                  style: TextStyle(
-                    fontSize:
-                    isTablet
-                        ? 28
-                        : 22,
+          await OpenFile.open(
+            file.path,
+          );
+        }
 
-                    fontWeight:
-                    FontWeight.bold,
+        if (state is MemberFeeError) {
+
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            SnackBar(
+              content: Text(
+                state.message,
+              ),
+            ),
+          );
+        }
+      },
+
+      child: Scaffold(
+
+        backgroundColor:
+        AppColors.background,
+
+        body: SafeArea(
+          child: Center(
+            child: Container(
+
+              constraints: BoxConstraints(
+                maxWidth: isTablet
+                    ? 650
+                    : double.infinity,
+              ),
+
+              padding:
+              EdgeInsets.all(w(18)),
+
+              child: Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+
+                children: [
+
+                  /// TITLE
+                  Text(
+                    "Members",
+                    style: TextStyle(
+                      fontSize:
+                      isTablet
+                          ? 28
+                          : 22,
+                      fontWeight:
+                      FontWeight.bold,
+                    ),
                   ),
-                ),
 
-                SizedBox(
-                  height: h(18),
-                ),
+                  SizedBox(
+                    height: h(18),
+                  ),
 
-                /// SEARCH
-                Row(
-                  children: [
+                  /// SEARCH
+                  Row(
+                    children: [
 
-                    Expanded(
-                      child: Container(
+                      Expanded(
+                        child: Container(
 
+                          height:
+                          isTablet
+                              ? 58
+                              : 50,
+
+                          decoration:
+                          BoxDecoration(
+                            color:
+                            Colors.white,
+                            borderRadius:
+                            BorderRadius.circular(
+                              16,
+                            ),
+                            border: Border.all(
+                              color: Colors
+                                  .grey
+                                  .shade300,
+                            ),
+                          ),
+
+                          child: TextField(
+
+                            controller:
+                            searchController,
+
+                            onChanged:
+                                (value) {
+
+                              _debounce
+                                  ?.cancel();
+
+                              _debounce =
+                                  Timer(
+                                    const Duration(
+                                      milliseconds:
+                                      500,
+                                    ),
+                                        () {
+
+                                      if (value
+                                          .trim()
+                                          .isEmpty) {
+
+                                        setState(() {
+                                          isSearching =
+                                          false;
+                                        });
+
+                                        context
+                                            .read<
+                                            MemberCubit>()
+                                            .getAllMembers(
+                                          isRefresh:
+                                          true,
+                                        );
+
+                                        return;
+                                      }
+
+                                      setState(() {
+                                        isSearching =
+                                        true;
+                                      });
+
+                                      context
+                                          .read<
+                                          SearchMemberCubit>()
+                                          .searchMembers(
+                                        keyword:
+                                        value,
+                                      );
+                                    },
+                                  );
+                            },
+
+                            decoration:
+                            const InputDecoration(
+                              hintText:
+                              "Search member...",
+                              prefixIcon:
+                              Icon(
+                                Icons.search,
+                              ),
+                              border:
+                              InputBorder
+                                  .none,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(
+                        width: w(12),
+                      ),
+
+                      Container(
                         height:
+                        isTablet
+                            ? 58
+                            : 50,
+
+                        width:
                         isTablet
                             ? 58
                             : 50,
@@ -193,226 +344,123 @@ class _MemberDetailsPageState
                         BoxDecoration(
                           color:
                           Colors.white,
-
                           borderRadius:
                           BorderRadius.circular(
                             16,
                           ),
-
-                          border:
-                          Border.all(
+                          border: Border.all(
                             color: Colors
                                 .grey
                                 .shade300,
                           ),
                         ),
 
-                        child:
-                        TextField(
-
-                          controller: searchController,
-
-                          onChanged: (value) {
-
-                            _debounce?.cancel();
-
-                            _debounce = Timer(
-                              const Duration(milliseconds: 500),
-                                  () {
-
-                                if (value.trim().isEmpty) {
-
-                                  setState(() {
-                                    isSearching = false;
-                                  });
-
-                                  context
-                                      .read<MemberCubit>()
-                                      .getAllMembers(
-                                    isRefresh: true,
-                                  );
-
-                                  return;
-                                }
-
-                                setState(() {
-                                  isSearching = true;
-                                });
-
-                                context
-                                    .read<SearchMemberCubit>()
-                                    .searchMembers(
-                                  keyword: value,
-                                );
-                              },
-                            );
-                          },
-
-                          decoration: const InputDecoration(
-                            hintText: "Search member...",
-                            prefixIcon: Icon(Icons.search),
-                            border: InputBorder.none,
-                          ),
+                        child: const Icon(
+                          Icons.tune_rounded,
                         ),
                       ),
-                    ),
+                    ],
+                  ),
 
-                    SizedBox(
-                      width: w(12),
-                    ),
+                  SizedBox(
+                    height: h(18),
+                  ),
 
-                    Container(
+                  /// TABS
+                  Row(
+                    children: [
 
-                      height:
-                      isTablet
-                          ? 58
-                          : 50,
-
-                      width:
-                      isTablet
-                          ? 58
-                          : 50,
-
-                      decoration:
-                      BoxDecoration(
-                        color:
-                        Colors.white,
-
-                        borderRadius:
-                        BorderRadius.circular(
-                          16,
-                        ),
-
-                        border:
-                        Border.all(
-                          color: Colors
-                              .grey
-                              .shade300,
-                        ),
+                      _buildTab(
+                        title: "All",
+                        index: 0,
+                        isTablet:
+                        isTablet,
                       ),
 
-                      child: const Icon(
-                        Icons.tune_rounded,
+                      SizedBox(
+                        width: w(10),
                       ),
-                    ),
-                  ],
-                ),
 
-                SizedBox(
-                  height: h(18),
-                ),
+                      _buildTab(
+                        title: "Active",
+                        index: 1,
+                        isTablet:
+                        isTablet,
+                      ),
 
-                /// TABS
-                Row(
-                  children: [
+                      SizedBox(
+                        width: w(10),
+                      ),
 
-                    _buildTab(
-                      title: "All",
-                      index: 0,
-                      isTablet: isTablet,
-                    ),
+                      _buildTab(
+                        title:
+                        "Not Visiting",
+                        index: 2,
+                        isTablet:
+                        isTablet,
+                      ),
+                    ],
+                  ),
 
-                    SizedBox(
-                      width: w(10),
-                    ),
+                  SizedBox(
+                    height: h(24),
+                  ),
 
-                    _buildTab(
-                      title: "Active",
-                      index: 1,
-                      isTablet: isTablet,
-                    ),
-
-                    SizedBox(
-                      width: w(10),
-                    ),
-
-                    _buildTab(
-                      title: "Not Visiting",
-                      index: 2,
-                      isTablet: isTablet,
-                    ),
-                  ],
-                ),
-
-                SizedBox(
-                  height: h(24),
-                ),
-
-                /// MEMBER LIST
-                Expanded(
-                  child:
-                  RefreshIndicator(
-
-                    onRefresh: () async {
-
-                      /// ALL
-                      if (selectedTab == 0) {
-
-                        await context
-                            .read<MemberCubit>()
-                            .refreshMembers();
-                      }
-
-                      /// ACTIVE
-                      else if (selectedTab == 1) {
-
-                        await context
-                            .read<ActiveMemberCubit>()
-                            .getActiveMembers(
-                          isRefresh: true,
-                        );
-                      }
-
-                      /// NOT VISITING
-                      else {
-
-                        await context
-                            .read<
-                            InActiveMemberCubit>()
-                            .getINActiveMembers(
-                          isRefresh: true,
-                        );
-                      }
-                    },
-
+                  Expanded(
                     child:
-                    _buildBody(
-                      isTablet:
-                      isTablet,
-                      h: h,
+                    RefreshIndicator(
+
+                      onRefresh:
+                          () async {
+
+                        if (selectedTab ==
+                            0) {
+
+                          await context
+                              .read<
+                              MemberCubit>()
+                              .refreshMembers();
+                        }
+
+                        else if
+                        (selectedTab ==
+                            1) {
+
+                          await context
+                              .read<
+                              ActiveMemberCubit>()
+                              .getActiveMembers(
+                            isRefresh:
+                            true,
+                          );
+                        }
+
+                        else {
+
+                          await context
+                              .read<
+                              InActiveMemberCubit>()
+                              .getINActiveMembers(
+                            isRefresh:
+                            true,
+                          );
+                        }
+                      },
+
+                      child:
+                      _buildBody(
+                        isTablet:
+                        isTablet,
+                        h: h,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
-
-      // floatingActionButton:
-      // FloatingActionButton.extended(
-      //
-      //   backgroundColor:
-      //   AppColors.primary,
-      //
-      //   onPressed: () {},
-      //
-      //   icon: const Icon(
-      //     Icons.add,
-      //   ),
-      //
-      //   label: Text(
-      //
-      //     "Add Member",
-      //
-      //     style: TextStyle(
-      //       fontSize:
-      //       isTablet
-      //           ? 16
-      //           : 14,
-      //     ),
-      //   ),
-      // ),
     );
   }
 
@@ -872,11 +920,15 @@ class _MemberDetailsPageState
               );
             },
 
+          onDownloadPdf: () async {
 
-          onDelete: () {
+            final memberId = member.id ?? "";
 
-            /// DELETE MEMBER
+            context
+                .read<MemberFeeCubit>()
+                .downloadLatestReceiptPdf(memberId);
           },
+
 
           onTap: () {
 

@@ -13,7 +13,7 @@ class MemberTile extends StatelessWidget {
   final String image;
   final bool isTablet;
   final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
+  final VoidCallback? onDownloadPdf;
   final VoidCallback? onTap;
 
   const MemberTile({
@@ -24,7 +24,7 @@ class MemberTile extends StatelessWidget {
     required this.image,
     required this.isTablet,
     this.onEdit,
-    this.onDelete,
+    this.onDownloadPdf,
     this.onTap,
   });
 
@@ -571,16 +571,13 @@ class MemberTile extends StatelessWidget {
                 ),
 
                 ListTile(
-
                   leading: const Icon(
-                    Icons.delete_rounded,
+                    Icons.picture_as_pdf,
                     color: Colors.red,
                   ),
 
                   title: const Text(
-
-                    "Delete Member",
-
+                    "Download Receipt PDF",
                     style: TextStyle(
                       color: Colors.red,
                     ),
@@ -588,11 +585,9 @@ class MemberTile extends StatelessWidget {
 
                   onTap: () {
 
-                    Navigator.pop(
-                      context,
-                    );
+                    Navigator.pop(context);
 
-                    onDelete?.call();
+                    onDownloadPdf?.call();
                   },
                 ),
               ],

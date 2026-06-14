@@ -8,9 +8,10 @@ class Apiendpoint {
 
 
 
+
   static const String baseUrl =
-      "http://192.168.1.63:8000/api";
+      "http://192.168.0.171:8000/api";
 
   static const String imageBaseUrl =
-      "http://192.168.1.63:8000";
+      "http://192.168.0.171:8000";
 }

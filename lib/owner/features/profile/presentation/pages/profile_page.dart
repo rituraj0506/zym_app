@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:zymmanagement/owner/features/expiredplan/presentation/cubit/expired_plan_cubit.dart';
+import 'package:zymmanagement/owner/features/fee/cubit/transaction_details_cubit.dart';
+import 'package:zymmanagement/owner/features/fee/presentation/pages/transaction_details_page.dart';
 import '../../../../../network/secure_storge.dart';
 import '../../../home/presentation/cubit/owner_dashboard_cubit.dart';
 import '../../../member/presentation/cubit/member_cubit.dart';
@@ -51,6 +54,14 @@ class _ProfilePageState
     context
         .read<MemberCubit>()
         .clearMembers();
+
+    context
+        .read<ExpiredPlanCubit>()
+        .clearMemberShip();
+
+    context
+        .read<TransactionDetailsCubit>()
+        .clearTransaction();
 
 
     /// CLEAR STORAGE
@@ -521,6 +532,20 @@ class _ProfilePageState
                               "Notification Settings",
 
                               onTap: () {},
+                            ),
+
+                            divider(),
+
+                            profileRow(
+                              icon: Icons
+                                  .payments,
+
+                              title:
+                              "Transaction Settings",
+
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context)=> TransactionDetailsPage()));
+                              },
                             ),
 
                             divider(),

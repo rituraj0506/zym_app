@@ -114,6 +114,7 @@ class MemberCubit extends Cubit<MemberState> {
     required String email,
     required String password,
     required String planId,
+    required String paymentMode,
     required File? profilePhoto,
   }) async {
     try {
@@ -127,6 +128,7 @@ class MemberCubit extends Cubit<MemberState> {
         "email": email,
         "password": password,
         "planId": planId,
+        "paymentMode": paymentMode,
 
         if (profilePhoto != null)
           "profilePhoto": await MultipartFile.fromFile(

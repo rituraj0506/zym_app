@@ -6,6 +6,7 @@ import 'package:zymmanagement/theme/app_colors.dart';
 import '../../../../models/gym_plan_response.dart';
 import '../cubit/plan_cubit.dart';
 import '../cubit/plan_state.dart';
+import 'package:flutter/services.dart';
 
 class AddPlanPage extends StatefulWidget {
 
@@ -644,38 +645,83 @@ class _AddPlanPageState
                     const SizedBox(
                         height: 10),
 
+                    // TextFormField(
+                    //
+                    //   controller:
+                    //   durationController,
+                    //
+                    //   keyboardType:
+                    //   TextInputType
+                    //       .number,
+                    //
+                    //   decoration:
+                    //   inputDecoration(
+                    //
+                    //     hint:
+                    //     "Enter duration",
+                    //
+                    //     icon:
+                    //     Icons
+                    //         .calendar_month,
+                    //   ),
+                    //
+                    //   validator:
+                    //       (value) {
+                    //
+                    //     if (value ==
+                    //         null ||
+                    //         value
+                    //             .trim()
+                    //             .isEmpty) {
+                    //
+                    //       return "Please enter duration";
+                    //     }
+                    //
+                    //     return null;
+                    //   },
+                    // ),
+
                     TextFormField(
+                      controller: durationController,
+                      keyboardType: TextInputType.number,
 
-                      controller:
-                      durationController,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        TextInputFormatter.withFunction(
+                              (oldValue, newValue) {
+                            if (newValue.text.isEmpty) {
+                              return newValue;
+                            }
 
-                      keyboardType:
-                      TextInputType
-                          .number,
+                            final value = int.tryParse(newValue.text);
 
-                      decoration:
-                      inputDecoration(
+                            if (value != null && value <= 12) {
+                              return newValue;
+                            }
 
-                        hint:
-                        "Enter duration",
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Duration cannot be more than 12 months",
+                                ),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
 
-                        icon:
-                        Icons
-                            .calendar_month,
+                            return oldValue;
+                          },
+                        ),
+                      ],
+
+                      decoration: inputDecoration(
+                        hint: "Enter duration",
+                        icon: Icons.calendar_month,
                       ),
 
-                      validator:
-                          (value) {
-
-                        if (value ==
-                            null ||
-                            value
-                                .trim()
-                                .isEmpty) {
-
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
                           return "Please enter duration";
                         }
-
                         return null;
                       },
                     ),

@@ -16,6 +16,8 @@ class RenewMemberCubit
 
     required String memberId,
     required String planId,
+    required String paymentMode,
+
 
   }) async {
 
@@ -31,6 +33,7 @@ class RenewMemberCubit
 
         memberId: memberId,
         planId: planId,
+        paymentMode: paymentMode,
       );
 
       emit(
