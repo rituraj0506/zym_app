@@ -1,17 +1,19 @@
+// class Apiendpoint {
+//
+//
+//   static const String baseUrl =
+//       "http://192.168.0.171:8000/api";
+//
+//   static const String imageBaseUrl =
+//       "http://192.168.0.171:8000";
+// }
+
+
 class Apiendpoint {
 
-  // static const String baseUrl =
-  //     "http://192.168.0.172:8000/api";
-  //
-  // static const String imageBaseUrl =
-  //     "http://192.168.0.172:8000";
-
-
-
-
   static const String baseUrl =
-      "http://192.168.0.171:8000/api";
+      "https://zym-app-backend.onrender.com/api";
 
   static const String imageBaseUrl =
-      "http://192.168.0.171:8000";
+      "https://zym-app-backend.onrender.com";
 }
