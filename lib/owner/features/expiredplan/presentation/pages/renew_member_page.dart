@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../plan/presentation/cubit/plan_cubit.dart';
 import '../../../plan/presentation/cubit/plan_state.dart';
@@ -13,11 +14,15 @@ class RenewMemberPage
     extends StatefulWidget {
 
   final String memberId;
+  final DateTime? expiryDate;
+  final bool allowRejoin;
 
   const RenewMemberPage({
 
     super.key,
     required this.memberId,
+    this.expiryDate,
+    this.allowRejoin = true,
   });
 
   @override
@@ -30,7 +35,35 @@ class _RenewMemberPageState
     extends State<RenewMemberPage> {
 
   String selectedPlanId = "";
+  int? selectedPlanDuration;
   String selectedPaymentMode = "cash";
+  late bool isRejoin;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.expiryDate != null) {
+      final daysExpired =
+          DateTime.now().difference(widget.expiryDate!).inDays;
+      isRejoin = widget.allowRejoin && daysExpired > 30;
+    } else {
+      isRejoin = false;
+    }
+  }
+
+  DateTime _addMonths(DateTime date, int months) {
+    var newYear = date.year;
+    var newMonth = date.month + months;
+    while (newMonth > 12) {
+      newYear++;
+      newMonth -= 12;
+    }
+    final daysInNewMonth =
+        DateTime(newYear, newMonth + 1, 0).day;
+    final newDay =
+        date.day > daysInNewMonth ? daysInNewMonth : date.day;
+    return DateTime(newYear, newMonth, newDay);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,114 +187,79 @@ class _RenewMemberPageState
 
                   /// HEADER CARD
                   Container(
-
                     width: double.infinity,
-
-                    padding:
-                    const EdgeInsets.all(
-                      24,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
                     ),
-
-                    decoration:
-                    BoxDecoration(
-
-                      gradient:
-                      const LinearGradient(
-
-                        colors: [
-
-                          Color(
-                            0xff6C63FF,
-                          ),
-
-                          Color(
-                            0xff8B5CF6,
-                          ),
-                        ],
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isRejoin
+                            ? const [
+                                Color(0xff10B981),
+                                Color(0xff059669),
+                              ]
+                            : const [
+                                Color(0xff6C63FF),
+                                Color(0xff8B5CF6),
+                              ],
                       ),
-
-                      borderRadius:
-                      BorderRadius.circular(
-                        28,
-                      ),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-
-                    child: Column(
-
+                    child: Row(
                       children: [
-
                         Container(
-
-                          padding:
-                          const EdgeInsets.all(
-                            18,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            shape: BoxShape.circle,
                           ),
-
-                          decoration:
-                          BoxDecoration(
-
-                            color:
-                            Colors.white
-                                .withOpacity(
-                              0.15,
-                            ),
-
-                            shape:
-                            BoxShape.circle,
-                          ),
-
-                          child:
-                          const Icon(
-
-                            Icons.workspace_premium,
-
-                            size: 42,
-
-                            color:
-                            Colors.white,
+                          child: Icon(
+                            isRejoin
+                                ? Icons.person_add_alt_1_rounded
+                                : Icons.workspace_premium,
+                            size: 28,
+                            color: Colors.white,
                           ),
                         ),
-
-                        const SizedBox(
-                          height: 18,
-                        ),
-
-                        const Text(
-
-                          "Renew Membership",
-
-                          style: TextStyle(
-
-                            color:
-                            Colors.white,
-
-                            fontSize: 24,
-
-                            fontWeight:
-                            FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 8,
-                        ),
-
-                        Text(
-
-                          "Select a membership plan",
-
-                          style: TextStyle(
-
-                            color:
-                            Colors.white
-                                .withOpacity(
-                              0.9,
-                            ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isRejoin
+                                    ? "Rejoin Membership"
+                                    : "Renew Membership",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                widget.expiryDate != null
+                                    ? "Expired: ${DateFormat('dd MMM yyyy').format(widget.expiryDate!)} (${DateTime.now().difference(widget.expiryDate!).inDays} days ago)"
+                                    : "Select a membership plan",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  /// SMART MODE SELECTOR (Only if allowRejoin is true and expiryDate is provided)
+                  if (widget.allowRejoin && widget.expiryDate != null) ...[
+                    const SizedBox(height: 14),
+                    _buildModeSelector(),
+                    _buildWarningBanner(),
+                  ],
 
                   const SizedBox(
                     height: 24,
@@ -350,12 +348,10 @@ class _RenewMemberPageState
                               return GestureDetector(
 
                                 onTap: () {
-
                                   setState(() {
-
-                                    selectedPlanId =
-                                        plan.id ??
-                                            "";
+                                    selectedPlanId = plan.id ?? "";
+                                    selectedPlanDuration =
+                                        plan.durationInMonths ?? 1;
                                   });
                                 },
 
@@ -621,6 +617,9 @@ class _RenewMemberPageState
                     ),
                   ),
 
+                  /// LIVE VALIDITY PREVIEW
+                  _buildValidityPreview(),
+
                   DropdownButtonFormField<String>(
                     value: selectedPaymentMode,
 
@@ -677,10 +676,9 @@ class _RenewMemberPageState
                       style:
                       ElevatedButton.styleFrom(
 
-                        backgroundColor:
-                        const Color(
-                          0xff6C63FF,
-                        ),
+                        backgroundColor: isRejoin
+                            ? const Color(0xff10B981)
+                            : const Color(0xff6C63FF),
 
                         elevation: 0,
 
@@ -720,21 +718,23 @@ class _RenewMemberPageState
                           return;
                         }
 
-                        context
-                            .read<
-                            RenewMemberCubit>()
-                            .renewMember(
-
-                          memberId:
-                          widget.memberId,
-
-                          planId:
-                          selectedPlanId,
-
-
-                          paymentMode:
-                          selectedPaymentMode,
-                        );
+                        if (isRejoin) {
+                          context
+                              .read<RenewMemberCubit>()
+                              .rejoinMember(
+                            memberId: widget.memberId,
+                            planId: selectedPlanId,
+                            paymentMode: selectedPaymentMode,
+                          );
+                        } else {
+                          context
+                              .read<RenewMemberCubit>()
+                              .renewMember(
+                            memberId: widget.memberId,
+                            planId: selectedPlanId,
+                            paymentMode: selectedPaymentMode,
+                          );
+                        }
                       },
 
                       child:
@@ -753,11 +753,13 @@ class _RenewMemberPageState
                         ),
                       )
 
-                          : const Text(
+                          : Text(
 
-                        "Renew Membership",
+                        isRejoin
+                            ? "Confirm Rejoin"
+                            : "Confirm Renew",
 
-                        style: TextStyle(
+                        style: const TextStyle(
 
                           fontSize: 17,
 
@@ -775,6 +777,269 @@ class _RenewMemberPageState
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildModeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xffE2E8F0),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          /// REGULAR RENEW
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  isRejoin = false;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 10, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: !isRejoin ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: !isRejoin
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.refresh,
+                          size: 16,
+                          color: !isRejoin
+                              ? const Color(0xff6C63FF)
+                              : Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Regular Renew",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: !isRejoin
+                                ? const Color(0xff6C63FF)
+                                : Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.expiryDate != null
+                          ? "From: ${DateFormat('dd MMM').format(widget.expiryDate!)}"
+                          : "Old cycle",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: !isRejoin
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          /// FRESH REJOIN
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  isRejoin = true;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 10, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: isRejoin ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: isRejoin
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person_add_alt_1,
+                          size: 16,
+                          color: isRejoin
+                              ? const Color(0xff10B981)
+                              : Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Fresh Rejoin",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isRejoin
+                                ? const Color(0xff10B981)
+                                : Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "From: Today (${DateFormat('dd MMM').format(DateTime.now())})",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isRejoin
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarningBanner() {
+    if (widget.expiryDate == null) return const SizedBox();
+    final daysExpired =
+        DateTime.now().difference(widget.expiryDate!).inDays;
+
+    if (isRejoin && daysExpired <= 30) {
+      return Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xffFFFBEB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xffFDE68A)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline,
+                color: Color(0xffD97706), size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                "Member expired only $daysExpired day${daysExpired == 1 ? '' : 's'} ago. Rejoining starts from today instead of previous expiry (${DateFormat('dd MMM').format(widget.expiryDate!)}).",
+                style: const TextStyle(
+                    fontSize: 11.5, color: Color(0xff92400E)),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (!isRejoin && daysExpired > 30) {
+      return Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xffFEF2F2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xffFECACA)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded,
+                color: Color(0xffDC2626), size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                "Member expired $daysExpired days ago. Regular Renew will add to the old date (${DateFormat('dd MMM yyyy').format(widget.expiryDate!)}). Fresh Rejoin is recommended.",
+                style: const TextStyle(
+                    fontSize: 11.5, color: Color(0xff991B1B)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox();
+  }
+
+  Widget _buildValidityPreview() {
+    if (selectedPlanDuration == null) return const SizedBox();
+
+    final startDate = isRejoin
+        ? DateTime.now()
+        : (widget.expiryDate ?? DateTime.now());
+    final endDate = _addMonths(startDate, selectedPlanDuration!);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isRejoin ? const Color(0xffECFDF5) : const Color(0xffEEF2FF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isRejoin ? const Color(0xffA7F3D0) : const Color(0xffC7D2FE),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.calendar_month_outlined,
+            size: 18,
+            color:
+                isRejoin ? const Color(0xff059669) : const Color(0xff4F46E5),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                    fontSize: 12.5, color: Colors.black87),
+                children: [
+                  TextSpan(
+                    text: isRejoin
+                        ? "Rejoin Validity: "
+                        : "Renewed Validity: ",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(
+                    text:
+                        "${DateFormat('dd MMM yyyy').format(startDate)} ➔ ${DateFormat('dd MMM yyyy').format(endDate)}",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: isRejoin
+                          ? const Color(0xff065F46)
+                          : const Color(0xff3730A3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

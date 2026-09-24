@@ -35,6 +35,8 @@ import 'owner/features/profile/presentation/cubit/gym_profile_cubit.dart';
 // }
 
 
+import 'package:zymmanagement/user/features/notification/presentation/cubit/user_notification_cubit.dart';
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(
     RemoteMessage message) async {
@@ -42,8 +44,15 @@ Future<void> firebaseMessagingBackgroundHandler(
   await Firebase.initializeApp();
 
   print(
-    "BACKGROUND MESSAGE => ${message.notification?.title}",
+    "BACKGROUND MESSAGE => ${message.notification?.title ?? message.data['title']}",
   );
+
+  if (message.notification == null && message.data.isNotEmpty) {
+    await NotificationService.showNotification(
+      title: message.data['title'] ?? "Gym Notification",
+      body: message.data['body'] ?? message.data['message'] ?? "",
+    );
+  }
 }
 
 
@@ -130,6 +139,10 @@ class MyApp extends StatelessWidget {
         ),
 
         BlocProvider(
+          create: (_) => UserNotificationCubit(),
+        ),
+
+        BlocProvider(
           create: (_) =>
               GymProfileCubit(),
         ),
@@ -188,7 +201,7 @@ class MyApp extends StatelessWidget {
       ],
 
       child: MaterialApp(
-
+        title: 'GymFlow',
         debugShowCheckedModeBanner:
         false,
 

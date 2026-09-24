@@ -2,10 +2,10 @@
 //
 //
 //   static const String baseUrl =
-//       "http://192.168.0.171:8000/api";
+//       "http://10.233.99.218:8000/api";
 //
 //   static const String imageBaseUrl =
-//       "http://192.168.0.171:8000";
+//       "http://10.233.99.218:8000";
 // }
 
 

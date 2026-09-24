@@ -96,6 +96,8 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
           final dashboardData = state.dashboardData;
 
           final isGymSetupComplete = state.isGymSetupComplete;
+          final String gymImage = dashboardData.data?.gym?.gymImage ?? "";
+          final bool hasGymImage = gymImage.trim().isNotEmpty && gymImage.startsWith("http");
 
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -124,33 +126,21 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                         children: [
                           CircleAvatar(
                             radius: isTablet ? 32 : 26,
-
                             backgroundColor: AppColors.primaryLight,
-
-                            // backgroundImage:
-                            //     dashboardData.data?.gym?.gymImage != null
-                            //     ? NetworkImage(
-                            //         dashboardData.data?.gym?.gymImage ?? "",
-                            //       )
-                            //     : null,
-
-
-                  backgroundImage: NetworkImage(
-
-                  (dashboardData?.data?.gym?.gymImage ?? "")
-                      .replaceAll(
-                    "127.0.0.1",
-                    "10.0.2.2",
-                  ),
-
-                ),
-
-
-
-              child: dashboardData.data?.gym?.gymImage == null
+                            backgroundImage: hasGymImage
+                                ? NetworkImage(
+                                    gymImage.replaceAll(
+                                      "127.0.0.1",
+                                      "10.0.2.2",
+                                    ),
+                                  )
+                                : null,
+                            onBackgroundImageError: hasGymImage
+                                ? (exception, stackTrace) {}
+                                : null,
+                            child: !hasGymImage
                                 ? const Icon(
                                     Icons.storefront_rounded,
-
                                     color: AppColors.primary,
                                   )
                                 : null,
@@ -214,7 +204,11 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                                 ],
                               ),
 
-                              child: const Icon(Icons.message_sharp),
+                              child: const Icon(
+                                Icons.notifications_none_rounded,
+                                size: 26,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                           ),
                         ],

@@ -51,4 +51,35 @@ class RenewMemberCubit
       );
     }
   }
+
+  Future<void> rejoinMember({
+    required String memberId,
+    required String planId,
+    required String paymentMode,
+  }) async {
+    emit(
+      RenewMemberLoading(),
+    );
+
+    try {
+      final message =
+      await RenewMemberApiServices.rejoinMember(
+        memberId: memberId,
+        planId: planId,
+        paymentMode: paymentMode,
+      );
+
+      emit(
+        RenewMemberSuccess(
+          message,
+        ),
+      );
+    } catch (e) {
+      emit(
+        RenewMemberError(
+          e.toString(),
+        ),
+      );
+    }
+  }
 }

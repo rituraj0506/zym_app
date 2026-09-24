@@ -53,7 +53,7 @@ class MemberCubit extends Cubit<MemberState> {
       );
 
       final List<MemberData> newMembers =
-          response.data ?? <MemberData>[];
+          response.data;
 
       allMembers.addAll(newMembers);
 

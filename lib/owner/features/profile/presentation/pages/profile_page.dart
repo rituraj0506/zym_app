@@ -7,9 +7,12 @@ import 'package:zymmanagement/owner/features/fee/cubit/transaction_details_cubit
 import 'package:zymmanagement/owner/features/fee/presentation/pages/transaction_details_page.dart';
 import '../../../../../network/secure_storge.dart';
 import '../../../home/presentation/cubit/owner_dashboard_cubit.dart';
+import '../../../home/presentation/cubit/owner_dashboard_state.dart';
 import '../../../member/presentation/cubit/member_cubit.dart';
 import '../cubit/gym_profile_cubit.dart';
 import '../cubit/gym_profile_state.dart';
+import 'change_password_page.dart';
+import 'create_gym_profile_page.dart';
 import 'gym_details_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -44,6 +47,8 @@ class _ProfilePageState
     await SharedPreferences.getInstance();
 
     await prefs.clear();
+
+    if (!mounted) return;
 
     /// CLEAR DASHBOARD
     context
@@ -129,6 +134,20 @@ class _ProfilePageState
 
           gymImage =
               profile?.gymImage ?? "";
+        }
+
+        /// FALLBACK TO DASHBOARD DATA IF PROFILE DATA IS EMPTY
+        if (name.isEmpty || email.isEmpty || mobile.isEmpty || gymName.isEmpty) {
+          final dashState = context.watch<OwnerDashboardCubit>().state;
+          if (dashState is OwnerDashboardLoaded) {
+            final owner = dashState.dashboardData.data?.owner;
+            final gym = dashState.dashboardData.data?.gym;
+            if (name.isEmpty) name = owner?.name ?? "";
+            if (email.isEmpty) email = owner?.email ?? "";
+            if (mobile.isEmpty) mobile = owner?.mobNo?.toString() ?? "";
+            if (gymName.isEmpty) gymName = gym?.gymName ?? "";
+            if (gymImage.isEmpty) gymImage = gym?.gymImage ?? "";
+          }
         }
 
         return Scaffold(
@@ -276,17 +295,18 @@ class _ProfilePageState
                               ),
 
                               child: ClipOval(
-                                child: gymImage.isNotEmpty
-
+                                child: (gymImage.trim().isNotEmpty &&
+                                        gymImage.startsWith("http"))
                                     ? Image.network(
-                                  gymImage,
-                                  fit: BoxFit.cover,
-                                )
-
-                                    : Image.asset(
-                                  "assets/images/profile.png",
-                                  fit: BoxFit.cover,
-                                ),
+                                        gymImage.replaceAll(
+                                            "127.0.0.1", "10.0.2.2"),
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                _buildAvatarFallback(
+                                                    name, isTablet),
+                                      )
+                                    : _buildAvatarFallback(name, isTablet),
                               ),
                             ),
 
@@ -382,7 +402,7 @@ class _ProfilePageState
                                 children: [
 
                                   Text(
-                                    name,
+                                    name.isNotEmpty ? name : "Gym Owner",
 
                                     style: TextStyle(
                                       fontSize:
@@ -401,7 +421,9 @@ class _ProfilePageState
                                   const SizedBox(height: 4),
 
                                   Text(
-                                    "Owner • $gymName",
+                                    gymName.isNotEmpty
+                                        ? "Owner • $gymName"
+                                        : "Owner • Setup Incomplete",
 
                                     style: TextStyle(
                                       fontSize:
@@ -410,44 +432,44 @@ class _ProfilePageState
                                           : 12.5,
 
                                       fontWeight:
-                                      FontWeight.w500,
+                                      FontWeight.w600,
 
                                       color:
-                                      Colors.grey.shade700,
+                                      gymName.isNotEmpty
+                                          ? Colors.grey.shade700
+                                          : const Color(0xFFD97706),
                                     ),
                                   ),
 
-                                  const SizedBox(height: 10),
-
-                                  Text(
-                                    email,
-
-                                    style: TextStyle(
-                                      fontSize:
-                                      isTablet
-                                          ? 13
-                                          : 11.5,
-
-                                      color:
-                                      Colors.grey.shade600,
+                                  if (email.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      email,
+                                      style: TextStyle(
+                                        fontSize:
+                                        isTablet
+                                            ? 13
+                                            : 11.5,
+                                        color:
+                                        Colors.grey.shade600,
+                                      ),
                                     ),
-                                  ),
+                                  ],
 
-                                  const SizedBox(height: 4),
-
-                                  Text(
-                                    mobile,
-
-                                    style: TextStyle(
-                                      fontSize:
-                                      isTablet
-                                          ? 13
-                                          : 11.5,
-
-                                      color:
-                                      Colors.grey.shade600,
+                                  if (mobile.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      mobile,
+                                      style: TextStyle(
+                                        fontSize:
+                                        isTablet
+                                            ? 13
+                                            : 11.5,
+                                        color:
+                                        Colors.grey.shade600,
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -455,6 +477,92 @@ class _ProfilePageState
                         ),
 
                       ),
+
+                      if (gymName.isEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFDE68A),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.storefront_rounded,
+                                  size: 20,
+                                  color: Color(0xFFB45309),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Gym Setup Pending",
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF92400E),
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      "Complete setup to manage gym details",
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: Color(0xFFB45309),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const CreateGymProfilePage(),
+                                    ),
+                                  );
+                                  if (context.mounted) {
+                                    context
+                                        .read<GymProfileCubit>()
+                                        .getGymProfile();
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD97706),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Text(
+                                    "Setup",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
 
                       const SizedBox(
                           height: 18),
@@ -519,7 +627,15 @@ class _ProfilePageState
                               title:
                               "Change Password",
 
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const ChangePasswordPage(),
+                                  ),
+                                );
+                              },
                             ),
 
                             divider(),
@@ -720,6 +836,39 @@ class _ProfilePageState
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAvatarFallback(String name, bool isTablet) {
+    final initial = name.trim().isNotEmpty
+        ? name.trim().substring(0, 1).toUpperCase()
+        : "";
+    return Container(
+      width: isTablet ? 74 : 62,
+      height: isTablet ? 74 : 62,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: initial.isNotEmpty
+          ? Text(
+              initial,
+              style: TextStyle(
+                fontSize: isTablet ? 28 : 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            )
+          : Icon(
+              Icons.fitness_center_rounded,
+              size: isTablet ? 32 : 26,
+              color: Colors.white,
+            ),
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 
 import '../../../../../network/dio_client.dart';
 
@@ -31,6 +30,15 @@ class FcmApiServices {
 
       print("SAVE TOKEN ERROR => $e");
       rethrow;
+    }
+  }
+
+  static Future<void> clearFcmToken() async {
+    try {
+      await DioClient.dio.put("/notification/clear-fcm-token");
+      print("FCM TOKEN CLEARED ON BACKEND");
+    } catch (e) {
+      print("CLEAR FCM TOKEN ERROR => $e");
     }
   }
 }

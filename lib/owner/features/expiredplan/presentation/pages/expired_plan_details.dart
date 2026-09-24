@@ -28,6 +28,7 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
     super.initState();
 
     Future.microtask(() {
+      if (!mounted) return;
       context.read<ExpiredPlanCubit>().fetchAll();
     });
 
@@ -57,6 +58,55 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _openRenewOrRejoinSheet(
+    BuildContext context,
+    String memberId, {
+    DateTime? expiryDate,
+    bool allowRejoin = true,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider.value(
+              value: context.read<PlanCubit>()..getAllPlans(),
+            ),
+            BlocProvider(
+              create: (_) => RenewMemberCubit(),
+            ),
+          ],
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.88,
+            child: RenewMemberPage(
+              memberId: memberId,
+              expiryDate: expiryDate,
+              allowRejoin: allowRejoin,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openDeleteSheet(BuildContext context, String memberId) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) {
+        return BlocProvider(
+          create: (_) => DeleteMemberCubit(),
+          child: DeleteMemberPage(
+            memberId: memberId,
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -113,7 +163,7 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
 
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.deepPurple.withOpacity(0.18),
+                            color: Colors.deepPurple.withValues(alpha: 0.18),
 
                             blurRadius: 20,
 
@@ -124,21 +174,24 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
 
                       child: Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(14),
-
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-
-                            child: Icon(
-                              Icons.warning_amber_rounded,
-
-                              color: Colors.white,
-
-                              size: isTablet ? 32 : 28,
+                          /// BACK BUTTON
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              height: isTablet ? 52 : 46,
+                              width: isTablet ? 52 : 46,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
                           ),
 
@@ -147,29 +200,34 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-
                               children: [
-                                Text(
-                                  "Plan Expiry Alerts",
-
-                                  style: TextStyle(
-                                    color: Colors.white,
-
-                                    fontWeight: FontWeight.bold,
-
-                                    fontSize: isTablet ? 28 : 22,
-                                  ),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        "Plan Expiry Alerts",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: isTablet ? 26 : 20,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: Colors.amberAccent,
+                                      size: 20,
+                                    ),
+                                  ],
                                 ),
-
-                                const SizedBox(height: 6),
-
+                                const SizedBox(height: 4),
                                 Text(
                                   "Manage expiring & expired memberships",
-
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
-
-                                    fontSize: isTablet ? 15 : 13,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontSize: isTablet ? 14 : 12,
                                   ),
                                 ),
                               ],
@@ -193,7 +251,7 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
 
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
 
                               blurRadius: 12,
 
@@ -317,30 +375,86 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
 
                             const SizedBox(height: 20),
 
-                            /// ERROR
-                            if (state is ExpiredPlanError)
-                              Expanded(
-                                child: Center(child: Text(state.message)),
-                              )
-                            /// EMPTY
-                            else if (!isLoading && currentList.isEmpty)
-                              const Expanded(
-                                child: Center(child: Text("No Members Found")),
-                              )
-                            /// LIST
-                            else
-                              Expanded(
-                                child: ListView.builder(
-                                  controller: _scrollController,
-
-                                  physics:
-                                  const BouncingScrollPhysics(),
-
-                                  itemCount: isLoading
-                                      ? 6
-                                      : currentList.length + 1,
-
-                                  itemBuilder: (context, index) {
+                            Expanded(
+                              child: RefreshIndicator(
+                                color: selectedTab == 0
+                                    ? const Color(0xff6C63FF)
+                                    : const Color(0xffEF4444),
+                                onRefresh: () async {
+                                  await context.read<ExpiredPlanCubit>().fetchAll();
+                                },
+                                child: state is ExpiredPlanError
+                                    ? ListView(
+                                        physics: const AlwaysScrollableScrollPhysics(
+                                          parent: BouncingScrollPhysics(),
+                                        ),
+                                        children: [
+                                          SizedBox(
+                                            height: 300,
+                                            child: Center(
+                                              child: Text(
+                                                state.message,
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  color: Colors.red,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : (!isLoading && currentList.isEmpty)
+                                        ? ListView(
+                                            physics: const AlwaysScrollableScrollPhysics(
+                                              parent: BouncingScrollPhysics(),
+                                            ),
+                                            children: [
+                                              SizedBox(
+                                                height: 300,
+                                                child: Center(
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.people_outline,
+                                                        size: 48,
+                                                        color: Colors.grey.shade400,
+                                                      ),
+                                                      const SizedBox(height: 12),
+                                                      Text(
+                                                        selectedTab == 0
+                                                            ? "No Expiring Soon Members"
+                                                            : "No Expired Members",
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: Colors.grey.shade600,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      Text(
+                                                        "Pull down to refresh",
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey.shade400,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : ListView.builder(
+                                            controller: _scrollController,
+                                            physics: const AlwaysScrollableScrollPhysics(
+                                              parent: BouncingScrollPhysics(),
+                                            ),
+                                            itemCount: isLoading
+                                                ? 6
+                                                : currentList.length + 1,
+                                            itemBuilder: (context, index) {
 
                                     /// SHIMMER
                                     if (isLoading) {
@@ -472,7 +586,7 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.black
-                                                .withOpacity(0.04),
+                                                .withValues(alpha: 0.04),
 
                                             blurRadius: 12,
 
@@ -643,115 +757,59 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                                           /// BUTTONS
                                           Row(
                                             children: [
-
-                                              /// RENEW
+                                              /// RENEW / REJOIN
                                               Expanded(
                                                 child: InkWell(
                                                   borderRadius:
-                                                  BorderRadius.circular(
-                                                    16,
-                                                  ),
-
+                                                      BorderRadius.circular(16),
                                                   onTap: () {
-
-                                                    showModalBottomSheet(
-                                                      context: context,
-
-                                                      isScrollControlled:
-                                                      true,
-
-                                                      backgroundColor:
-                                                      Colors
-                                                          .transparent,
-
-                                                      builder: (_) {
-
-                                                        return MultiBlocProvider(
-                                                          providers: [
-
-                                                            BlocProvider.value(
-                                                              value:
-                                                              context
-                                                                  .read<
-                                                                  PlanCubit
-                                                              >()
-                                                                ..getAllPlans(),
-                                                            ),
-
-                                                            BlocProvider(
-                                                              create:
-                                                                  (_) =>
-                                                                  RenewMemberCubit(),
-                                                            ),
-                                                          ],
-
-                                                          child: SizedBox(
-                                                            height:
-                                                            MediaQuery.of(
-                                                              context,
-                                                            ).size.height *
-                                                                0.88,
-
-                                                            child:
-                                                            RenewMemberPage(
-                                                              memberId:
-                                                              memberId,
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
+                                                    _openRenewOrRejoinSheet(
+                                                      context,
+                                                      memberId,
+                                                      expiryDate: expiryDate,
+                                                      allowRejoin:
+                                                          selectedTab == 1,
                                                     );
                                                   },
-
                                                   child: Container(
                                                     height: 52,
-
-                                                    decoration:
-                                                    BoxDecoration(
+                                                    decoration: BoxDecoration(
                                                       gradient:
-                                                      const LinearGradient(
+                                                          const LinearGradient(
                                                         colors: [
-                                                          Color(
-                                                            0xff6C63FF,
-                                                          ),
-                                                          Color(
-                                                            0xff8B5CF6,
-                                                          ),
+                                                          Color(0xff6C63FF),
+                                                          Color(0xff8B5CF6),
                                                         ],
                                                       ),
-
                                                       borderRadius:
-                                                      BorderRadius.circular(
+                                                          BorderRadius.circular(
                                                         16,
                                                       ),
                                                     ),
-
-                                                    child: const Row(
+                                                    child: Row(
                                                       mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
-
+                                                          MainAxisAlignment
+                                                              .center,
                                                       children: [
-
-                                                        Icon(
+                                                        const Icon(
                                                           Icons.refresh,
-
-                                                          color:
-                                                          Colors.white,
+                                                          color: Colors.white,
+                                                          size: 20,
                                                         ),
-
-                                                        SizedBox(width: 8),
-
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
                                                         Text(
-                                                          "Renew",
-
-                                                          style: TextStyle(
+                                                          selectedTab == 1
+                                                              ? "Renew / Rejoin"
+                                                              : "Renew",
+                                                          style:
+                                                              const TextStyle(
                                                             color:
-                                                            Colors.white,
-
+                                                                Colors.white,
                                                             fontWeight:
-                                                            FontWeight
-                                                                .bold,
+                                                                FontWeight.bold,
+                                                            fontSize: 14,
                                                           ),
                                                         ),
                                                       ],
@@ -759,97 +817,55 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                                                   ),
                                                 ),
                                               ),
-
-                                              const SizedBox(width: 14),
+                                              const SizedBox(width: 12),
 
                                               /// DELETE
                                               Expanded(
                                                 child: InkWell(
                                                   borderRadius:
-                                                  BorderRadius.circular(
-                                                    16,
-                                                  ),
-
+                                                      BorderRadius.circular(16),
                                                   onTap: () {
-
-                                                    showModalBottomSheet(
-                                                      context: context,
-
-                                                      backgroundColor:
-                                                      Colors
-                                                          .transparent,
-
-                                                      isScrollControlled:
-                                                      true,
-
-                                                      builder: (_) {
-
-                                                        return BlocProvider(
-                                                          create:
-                                                              (_) =>
-                                                              DeleteMemberCubit(),
-
-                                                          child:
-                                                          DeleteMemberPage(
-                                                            memberId:
-                                                            memberId,
-                                                          ),
-                                                        );
-                                                      },
+                                                    _openDeleteSheet(
+                                                      context,
+                                                      memberId,
                                                     );
                                                   },
-
                                                   child: Container(
                                                     height: 52,
-
-                                                    decoration:
-                                                    BoxDecoration(
+                                                    decoration: BoxDecoration(
                                                       color: const Color(
                                                         0xffFEF2F2,
                                                       ),
-
                                                       borderRadius:
-                                                      BorderRadius.circular(
+                                                          BorderRadius.circular(
                                                         16,
                                                       ),
-
                                                       border: Border.all(
                                                         color: Colors
-                                                            .red
-                                                            .shade200,
+                                                            .red.shade200,
                                                       ),
                                                     ),
-
                                                     child: Row(
                                                       mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
-
+                                                          MainAxisAlignment
+                                                              .center,
                                                       children: [
-
                                                         Icon(
-                                                          Icons
-                                                              .delete_outline,
-
-                                                          color:
-                                                          Colors.red
-                                                              .shade700,
+                                                          Icons.delete_outline,
+                                                          color: Colors
+                                                              .red.shade700,
+                                                          size: 20,
                                                         ),
-
                                                         const SizedBox(
-                                                          width: 8,
+                                                          width: 6,
                                                         ),
-
-                                                        Text(
+                                                        const Text(
                                                           "Delete",
-
                                                           style: TextStyle(
-                                                            color:
-                                                            Colors.red,
-
+                                                            color: Colors.red,
                                                             fontWeight:
-                                                            FontWeight
-                                                                .bold,
+                                                                FontWeight.bold,
+                                                            fontSize: 14,
                                                           ),
                                                         ),
                                                       ],
@@ -865,6 +881,7 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                                   },
                                 ),
                               ),
+                            ),
                           ],
                         ),
                       ),

@@ -41,14 +41,17 @@ class _DashboardContainerState extends State<DashboardContainer> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
         if (selectedIndex == 0) {
-          final shouldExit = await showDialog(
+          final shouldExit = await showDialog<bool>(
             context: context,
             builder: (context) {
               return AlertDialog(
-                title: const Text("Exit App"),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                title: const Text("Exit App", style: TextStyle(fontWeight: FontWeight.bold)),
                 content: const Text(
                   "Are you sure you want to exit?",
                 ),
@@ -63,23 +66,22 @@ class _DashboardContainerState extends State<DashboardContainer> {
                     onPressed: () {
                       Navigator.pop(context, true);
                     },
-                    child: const Text("Yes"),
+                    child: const Text("Yes", style: TextStyle(color: Colors.red)),
                   ),
                 ],
               );
             },
           );
 
-          return shouldExit ?? false;
+          if (shouldExit == true && context.mounted) {
+            Navigator.of(context).pop();
+          }
         } else {
           setState(() {
             selectedIndex = 0;
           });
-
-          return false;
         }
       },
-
       child: Scaffold(
         backgroundColor: AppColors.background,
 

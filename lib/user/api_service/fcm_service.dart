@@ -1,165 +1,82 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'fcm_api_service.dart';
 import 'notification_service.dart';
 
-// class FCMService {
-//
-//   static Future<void> initialize() async {
-//
-//     try {
-//
-//       final messaging =
-//           FirebaseMessaging.instance;
-//
-//       NotificationSettings settings =
-//       await messaging
-//           .getNotificationSettings();
-//
-//       // First time user
-//       if (settings.authorizationStatus ==
-//           AuthorizationStatus.notDetermined) {
-//
-//         settings =
-//         await messaging
-//             .requestPermission();
-//       }
-//
-//       // Permission allowed
-//       if (settings.authorizationStatus ==
-//           AuthorizationStatus.authorized) {
-//
-//         final token =
-//         await messaging.getToken();
-//
-//         print(
-//           "FCM TOKEN => $token",
-//         );
-//
-//         if (token != null) {
-//
-//           await FcmApiServices
-//               .saveFcmToken(token);
-//         }
-//       }
-//
-//       // User denied
-//       else if (
-//       settings.authorizationStatus ==
-//           AuthorizationStatus.denied) {
-//
-//         print(
-//           "Notification permission denied",
-//         );
-//       }
-//
-//     } catch (e) {
-//
-//       print(
-//         "FCM INIT ERROR => $e",
-//       );
-//     }
-//   }
-// }
-
-
 class FCMService {
+  static Function()? onNotificationReceived;
 
   static Future<void> initialize() async {
-
     try {
+      final messaging = FirebaseMessaging.instance;
 
-      final messaging =
-          FirebaseMessaging.instance;
+      // 1. Request Notification Permission (Industry standard: after login / entering dashboard)
+      final settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
 
-      NotificationSettings settings =
-      await messaging
-          .getNotificationSettings();
+      print("FCM PERMISSION STATUS => ${settings.authorizationStatus}");
 
-      if (settings.authorizationStatus ==
-          AuthorizationStatus.notDetermined) {
+      // Android 13+ runtime permission for local heads-up notification display
+      await NotificationService.flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
 
-        settings =
-        await messaging
-            .requestPermission();
+      // 2. Retrieve FCM Token and sync with Backend database
+      try {
+        final token = await messaging.getToken();
+        print("FCM TOKEN RETRIEVED => $token");
+        if (token != null && token.isNotEmpty) {
+          await FcmApiServices.saveFcmToken(token);
+        }
+      } catch (tokenErr) {
+        print("FCM TOKEN RETRIEVAL/SAVE ERROR => $tokenErr");
       }
 
-      if (settings.authorizationStatus ==
-          AuthorizationStatus.authorized) {
-
-        final token =
-        await messaging.getToken();
-
-        print(
-          "FCM TOKEN => $token",
-        );
-
-        if (token != null) {
-
-          await FcmApiServices
-              .saveFcmToken(token);
-        }
-
-        // FOREGROUND
-        FirebaseMessaging.onMessage.listen(
-              (RemoteMessage message) {
-
-            print(
-              "FOREGROUND => ${message.notification?.title}",
-            );
-
-            NotificationService
-                .showNotification(
-              title:
-              message.notification?.title ??
-                  "",
-              body:
-              message.notification?.body ??
-                  "",
-            );
-          },
-        );
-
-        // BACKGROUND TAP
-        FirebaseMessaging.onMessageOpenedApp
-            .listen(
-              (RemoteMessage message) {
-
-            print(
-              "BACKGROUND TAP => ${message.notification?.title}",
-            );
-
-          },
-        );
-
-        // APP KILLED TAP
-        final initialMessage =
-        await messaging
-            .getInitialMessage();
-
-        if (initialMessage != null) {
-
+      // 3. FOREGROUND LISTENER (When app is open on screen)
+      FirebaseMessaging.onMessage.listen(
+        (RemoteMessage message) {
           print(
-            "APP OPENED FROM TERMINATED STATE",
+              "FOREGROUND NOTIFICATION RECEIVED => ${message.notification?.title ?? message.data['title']}");
+
+          final title = message.notification?.title ??
+              message.data['title'] ??
+              "Gym Notification";
+          final body = message.notification?.body ??
+              message.data['body'] ??
+              message.data['message'] ??
+              "";
+
+          // Show heads-up notification banner with sound on screen
+          NotificationService.showNotification(
+            title: title,
+            body: body,
           );
 
-        }
-      }
-
-      else if (
-      settings.authorizationStatus ==
-          AuthorizationStatus.denied) {
-
-        print(
-          "Notification permission denied",
-        );
-      }
-
-    } catch (e) {
-
-      print(
-        "FCM INIT ERROR => $e",
+          // Update red dot badge count in real-time without requiring pull-to-refresh
+          onNotificationReceived?.call();
+        },
       );
+
+      // 4. BACKGROUND TAP LISTENER
+      FirebaseMessaging.onMessageOpenedApp.listen(
+        (RemoteMessage message) {
+          print("BACKGROUND TAP => ${message.notification?.title}");
+          onNotificationReceived?.call();
+        },
+      );
+
+      // 5. APP KILLED TAP LISTENER
+      final initialMessage = await messaging.getInitialMessage();
+      if (initialMessage != null) {
+        print("APP OPENED FROM TERMINATED STATE");
+      }
+    } catch (e) {
+      print("FCM INIT ERROR => $e");
     }
   }
 }

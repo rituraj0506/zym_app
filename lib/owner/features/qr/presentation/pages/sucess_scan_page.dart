@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ScanSuccessPage extends StatefulWidget {
 
@@ -294,17 +295,17 @@ class _ScanSuccessPageState
 
                         _detailTile(
                           icon:
-                          Icons.access_time,
+                          Icons.access_time_rounded,
 
                           title:
                           "Check-in Time",
 
                           value:
-                          widget.checkInTime,
+                          _formatTime(widget.checkInTime),
                         ),
 
-                        if (widget.checkOutTime !=
-                            null) ...[
+                        if (widget.checkOutTime != null &&
+                            widget.checkOutTime!.trim().isNotEmpty) ...[
 
                           const SizedBox(height: 18),
 
@@ -316,8 +317,7 @@ class _ScanSuccessPageState
                             "Check-out Time",
 
                             value:
-                            widget
-                                .checkOutTime!,
+                            _formatTime(widget.checkOutTime),
                           ),
                         ],
 
@@ -325,13 +325,12 @@ class _ScanSuccessPageState
 
                         _detailTile(
                           icon:
-                          Icons.calendar_month,
+                          Icons.calendar_month_rounded,
 
                           title: "Date",
 
                           value:
-                          widget
-                              .attendanceDate,
+                          _formatDate(widget.attendanceDate),
                         ),
                       ],
                     ),
@@ -449,5 +448,29 @@ class _ScanSuccessPageState
         ),
       ],
     );
+  }
+
+  String _formatTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return "--";
+    final trimmed = raw.trim();
+    try {
+      final dt = DateTime.tryParse(trimmed);
+      if (dt != null) {
+        return DateFormat('hh:mm a').format(dt.toLocal());
+      }
+    } catch (_) {}
+    return trimmed;
+  }
+
+  String _formatDate(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return "--";
+    final trimmed = raw.trim();
+    try {
+      final dt = DateTime.tryParse(trimmed);
+      if (dt != null) {
+        return DateFormat('dd MMM yyyy').format(dt.toLocal());
+      }
+    } catch (_) {}
+    return trimmed;
   }
 }

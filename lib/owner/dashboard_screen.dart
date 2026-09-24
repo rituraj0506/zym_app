@@ -11,7 +11,12 @@ import 'package:permission_handler/permission_handler.dart';
 
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final int initialIndex;
+
+  const DashboardScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -19,7 +24,13 @@ class DashboardScreen extends StatefulWidget {
 
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int selectedIndex = 0;
+  late int selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedIndex = widget.initialIndex;
+  }
 
 
 

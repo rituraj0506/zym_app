@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:zymmanagement/owner/features/profile/presentation/pages/create_gym_profile_page.dart';
 import 'package:zymmanagement/owner/features/profile/presentation/pages/update_gym_profile_page.dart';
+import 'package:zymmanagement/theme/app_colors.dart';
 
 import '../cubit/gym_profile_cubit.dart';
 import '../cubit/gym_profile_state.dart';
@@ -46,13 +48,98 @@ class GymDetailsPage extends StatelessWidget {
           GymProfileState>(
 
         builder: (context, state) {
-
-          if (state
-          is! GymProfileDataSuccess) {
-
+          if (state is GymProfileFetchingLoading) {
             return const Center(
-              child:
-              CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
+
+          if (state is! GymProfileDataSuccess || state.profile.data == null) {
+            return Center(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.storefront_rounded,
+                        size: 46,
+                        color: Color(0xFF6D28D9),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Complete Gym Setup",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Complete your gym profile setup to view and manage gym details.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CreateGymProfilePage(),
+                          ),
+                        );
+                        if (context.mounted) {
+                          context.read<GymProfileCubit>().getGymProfile();
+                        }
+                      },
+                      icon: const Icon(Icons.add_business_rounded, size: 20),
+                      label: const Text(
+                        "Complete Gym Setup",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6D28D9),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton.icon(
+                      onPressed: () {
+                        context.read<GymProfileCubit>().getGymProfile();
+                      },
+                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                      label: const Text("Refresh"),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           }
 
@@ -301,32 +388,43 @@ class GymDetailsPage extends StatelessWidget {
                         borderRadius:
                         BorderRadius.circular(30),
 
-                        child: Image.network(
-                          gym?.gymImage ?? "",
+                        child: ((gym?.gymImage ?? "").trim().isNotEmpty &&
+                                (gym?.gymImage ?? "").startsWith("http"))
+                            ? Image.network(
+                                (gym?.gymImage ?? "")
+                                    .replaceAll("127.0.0.1", "10.0.2.2"),
 
-                          fit: BoxFit.cover,
+                                fit: BoxFit.cover,
 
-                          errorBuilder:
-                              (
-                              context,
-                              error,
-                              stackTrace,
-                              ) {
+                                errorBuilder:
+                                    (
+                                    context,
+                                    error,
+                                    stackTrace,
+                                    ) {
 
-                            return Container(
-                              color: Colors.white,
+                                  return Container(
+                                    color: Colors.white,
 
-                              child: const Icon(
-                                Icons.fitness_center,
+                                    child: const Icon(
+                                      Icons.fitness_center,
 
-                                size: 80,
+                                      size: 80,
 
-                                color:
-                                Colors.deepPurple,
+                                      color:
+                                      Colors.deepPurple,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(
+                                color: Colors.white,
+                                child: const Icon(
+                                  Icons.fitness_center,
+                                  size: 80,
+                                  color: Colors.deepPurple,
+                                ),
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ),
 

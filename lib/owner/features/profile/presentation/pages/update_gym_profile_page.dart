@@ -2,10 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
 
 import '../../../../../theme/app_colors.dart';
+import '../../../../../utils/image_helper.dart';
 import '../cubit/gym_profile_cubit.dart';
 import '../cubit/gym_profile_state.dart';
 
@@ -96,42 +95,35 @@ class _UpdateGymProfilePageState
   }
 
   Future<void> pickImage() async {
+    final source = await ImageHelper.showImageSourceDialog(
+      context,
+      maxSizeInKb: 200,
+      title: "Select Gym Photo",
+    );
+    if (source == null || !mounted) return;
 
-    final picked =
-    await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
+    final processed = await ImageHelper.pickCropAndCompressImage(
+      context: context,
+      source: source,
+      maxSizeInKb: 200,
+      cropTitle: 'Crop Gym Photo',
     );
 
-    if (picked != null) {
-
-      final imageExtension =
-      extensionFromPath(
-        picked.path,
-      ).toLowerCase();
-
-      if (imageExtension != ".jpg" &&
-          imageExtension != ".jpeg" &&
-          imageExtension != ".png") {
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-
+    if (processed != null && mounted) {
+      final bytes = await processed.length();
+      if (!mounted) return;
+      if (bytes > 200 * 1024) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              "Please select JPG or PNG image",
-            ),
+            content: Text("Image size exceeds 200 KB limit. Please select a smaller photo."),
+            backgroundColor: Colors.red,
           ),
         );
-
         return;
       }
 
       setState(() {
-        selectedImage =
-            File(picked.path);
+        selectedImage = processed;
       });
     }
   }
@@ -167,13 +159,6 @@ class _UpdateGymProfilePageState
       controller.text =
       "$hour:$minute $period";
     }
-  }
-
-  String extensionFromPath(
-      String path,
-      ) {
-
-    return p.extension(path);
   }
 
   @override
@@ -363,28 +348,29 @@ class _UpdateGymProfilePageState
                                   Colors.white,
 
                                   backgroundImage:
+                                      selectedImage != null
+                                          ? FileImage(
+                                              selectedImage!,
+                                            )
+                                          : (networkImage.trim().isNotEmpty &&
+                                                  networkImage.startsWith("http"))
+                                              ? NetworkImage(
+                                                  networkImage.replaceAll(
+                                                      "127.0.0.1", "10.0.2.2"),
+                                                )
+                                              : null,
 
-                                  selectedImage !=
-                                      null
-
-                                      ? FileImage(
-                                    selectedImage!,
-                                  )
-
-                                      : networkImage
-                                      .isNotEmpty
-
-                                      ? NetworkImage(
-                                    networkImage,
-                                  )
-
-                                      : const AssetImage(
-                                    "asset/images/profile.png",
-                                  )
-                                  as ImageProvider,
-
-                                ),
+                                  child: (selectedImage == null &&
+                                          (networkImage.trim().isEmpty ||
+                                              !networkImage.startsWith("http")))
+                                      ? const Icon(
+                                          Icons.fitness_center_rounded,
+                                          size: 42,
+                                          color: Colors.deepPurple,
+                                        )
+                                      : null,
                               ),
+                            ),
 
                               Container(
                                 padding:
@@ -445,6 +431,25 @@ class _UpdateGymProfilePageState
                             Colors.white70,
 
                             fontSize: 13,
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            "Max 200 KB • Auto-compressed",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],

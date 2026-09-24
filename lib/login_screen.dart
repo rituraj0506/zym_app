@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:zymmanagement/network/api_end_point.dart';
 import 'package:zymmanagement/network/secure_storge.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
+import 'package:zymmanagement/user/api_service/fcm_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -67,6 +68,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
         await SecureStorageService.saveToken(token);
         await SecureStorageService.saveRole(role);
+
+        // Register FCM Token with backend for member
+        if (role != "owner") {
+          FCMService.initialize();
+        }
 
         if (!mounted) return;
 
@@ -176,48 +182,98 @@ class _LoginScreenState extends State<LoginScreen> {
 
               Center(
                 child: Container(
-                  height: 115,
-                  width: 115,
-
-                  padding: const EdgeInsets.all(20),
-
+                  height: 100,
+                  width: 100,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-
+                    borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+                        color: AppColors.primary.withValues(alpha: 0.22),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-
-                  child: Image.asset(
-                    "assets/gym_logo.png",
-                    fit: BoxFit.contain,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.asset(
+                      "asset/gymflow_logo.png",
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 42),
+              const SizedBox(height: 24),
+
+              Center(
+                child: Column(
+                  children: [
+                    RichText(
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "Gym",
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          TextSpan(
+                            text: "Flow",
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        "SMART GYM MANAGEMENT",
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
 
               const Text(
                 "Welcome Back 👋",
                 style: TextStyle(
-                  fontSize: 30,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
               const Text(
-                "Login to continue managing your gym.",
+                "Sign in to continue managing your gym.",
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
               ),

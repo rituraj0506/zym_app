@@ -14,12 +14,14 @@ import '../cubit/inactive_member_state.dart';
 import '../cubit/search_member_cubit.dart';
 import '../cubit/search_member_state.dart';
 import 'add_member_page.dart';
+import 'member_profile_sheet.dart';
 import 'member_tile.dart';
 
 import 'dart:io';
-
-import 'package:path_provider/path_provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MemberDetailsPage extends StatefulWidget {
   const MemberDetailsPage({
@@ -156,21 +158,17 @@ class _MemberDetailsPageState
         }
 
         if (state is PdfDownloadedState) {
-
-          final dir =
-          await getTemporaryDirectory();
-
+          final dir = await getTemporaryDirectory();
           final file = File(
-            "${dir.path}/receipt.pdf",
+            "${dir.path}/receipt_${DateTime.now().millisecondsSinceEpoch}.pdf",
           );
 
           await file.writeAsBytes(
             state.pdfBytes,
           );
 
-          await OpenFile.open(
-            file.path,
-          );
+          if (!context.mounted) return;
+          _showReceiptActionSheet(context, file);
         }
 
         if (state is MemberFeeError) {
@@ -888,51 +886,55 @@ class _MemberDetailsPageState
         final member =
         members[index];
 
+        final String memberName = (member.name != null && member.name.toString().trim().isNotEmpty)
+            ? member.name.toString().trim()
+            : (member.user?.name ?? "");
+
+        final String memberPhone = (member.mobNo != null && member.mobNo.toString().trim().isNotEmpty)
+            ? member.mobNo.toString().trim()
+            : (member.user?.mobNo?.toString() ?? "");
 
         return MemberTile(
-
-          name:
-          member.user?.name ?? "",
-
-          mobNo:
-          member.user?.mobNo?.toString() ?? "",
-
-          status:
-          member.memberStatus ?? "",
-
-          image:
-          member.profilePhoto ?? "",
-
-          isTablet:
-          isTablet,
-
+          name: memberName,
+          mobNo: memberPhone,
+          status: member.memberStatus ?? "",
+          image: member.profilePhoto ?? "",
+          planName: member.plan?.planName,
+          planMonths: member.plan?.durationInMonths,
+          expiryDate: member.expiryDate,
+          isTablet: isTablet,
           onEdit: () {
-
-
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AddMemberPage(
-                    member: member,
-                  ),
+            final memberCubit = context.read<MemberCubit>();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AddMemberPage(
+                  member: member,
                 ),
-              );
-            },
-
+              ),
+            ).then((updated) {
+              if (updated == true) {
+                memberCubit.getAllMembers(isRefresh: true);
+              }
+            });
+          },
           onDownloadPdf: () async {
-
             final memberId = member.id ?? "";
-
             context
                 .read<MemberFeeCubit>()
                 .downloadLatestReceiptPdf(memberId);
           },
-
-
+          onViewProfile: () {
+            MemberProfileSheet.show(
+              context,
+              member: member,
+            );
+          },
           onTap: () {
-
-            /// OPEN DETAILS
+            MemberProfileSheet.show(
+              context,
+              member: member,
+            );
           },
         );
 
@@ -1070,6 +1072,177 @@ class _MemberDetailsPageState
           ],
         ),
       ),
+    );
+  }
+
+  void _showReceiptActionSheet(BuildContext context, File file) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF25D366).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const FaIcon(
+                        FontAwesomeIcons.whatsapp,
+                        color: Color(0xFF25D366),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Receipt PDF Ready",
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            "Send receipt directly to member or view on device",
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+
+                // Share on WhatsApp / Apps Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      try {
+                        final box =
+                            context.findRenderObject() as RenderBox?;
+                        final rect = box != null
+                            ? box.localToGlobal(Offset.zero) & box.size
+                            : null;
+
+                        await SharePlus.instance.share(
+                          ShareParams(
+                            files: [
+                              XFile(
+                                file.path,
+                                mimeType: 'application/pdf',
+                                name: 'Gym_Membership_Receipt.pdf',
+                              ),
+                            ],
+                            text:
+                                "Dear Member, here is your Gym Membership Fee Receipt.",
+                            sharePositionOrigin: rect,
+                          ),
+                        );
+                      } catch (e) {
+                        debugPrint("Error sharing PDF: $e");
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: Colors.red.shade700,
+                              content: Text(
+                                "Share error: $e\n(Naye plugin ke liye app ko ek baar Stop karke dobara Run karein)",
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const FaIcon(
+                      FontAwesomeIcons.whatsapp,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      "Share on WhatsApp / Apps",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF25D366),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Open / View PDF Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      OpenFile.open(file.path);
+                    },
+                    icon: const Icon(
+                      Icons.picture_as_pdf_rounded,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      "Open & View PDF",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

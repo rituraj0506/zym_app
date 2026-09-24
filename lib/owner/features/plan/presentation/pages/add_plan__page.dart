@@ -72,69 +72,326 @@ class _AddPlanPageState
   }
 
   Future<void> submitPlan() async {
-
     FocusScope.of(context).unfocus();
 
-    if (!_formKey.currentState!
-        .validate()) {
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
+    final String planName = planNameController.text.trim();
+    final String duration = durationController.text.trim();
+    final String price = priceController.text.trim();
+    final String description = descriptionController.text.trim();
+
+    // Confirmation Popup to verify Month, Price, and Plan Name
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => _buildConfirmPlanDialog(
+        dialogCtx: dialogCtx,
+        planName: planName,
+        duration: duration,
+        price: price,
+        description: description,
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     if (isEdit) {
-
-      context
-          .read<PlanCubit>()
-          .updatePlan(
-
-        id:
-        widget.plan?.id ?? "",
-
-        planName:
-        planNameController.text
-            .trim(),
-
-        durationInMonths:
-        int.parse(
-          durationController.text
-              .trim(),
-        ),
-
-        price: int.parse(
-          priceController.text
-              .trim(),
-        ),
-
-        description:
-        descriptionController.text
-            .trim(),
+      context.read<PlanCubit>().updatePlan(
+        id: widget.plan?.id ?? "",
+        planName: planName,
+        durationInMonths: int.parse(duration),
+        price: int.parse(price),
+        description: description,
       );
-
     } else {
-
-      context
-          .read<PlanCubit>()
-          .createPlan(
-
-        planName:
-        planNameController.text
-            .trim(),
-
-        durationInMonths:
-        int.parse(
-          durationController.text
-              .trim(),
-        ),
-
-        price: int.parse(
-          priceController.text
-              .trim(),
-        ),
-
-        description:
-        descriptionController.text
-            .trim(),
+      context.read<PlanCubit>().createPlan(
+        planName: planName,
+        durationInMonths: int.parse(duration),
+        price: int.parse(price),
+        description: description,
       );
     }
+  }
+
+  Widget _buildConfirmPlanDialog({
+    required BuildContext dialogCtx,
+    required String planName,
+    required String duration,
+    required String price,
+    required String description,
+  }) {
+    final width = MediaQuery.of(dialogCtx).size.width;
+    final bool isTablet = width >= 700;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.white,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 60 : 20,
+        vertical: 24,
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 450),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Icon + Header
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.assignment_turned_in_rounded,
+                    size: 34,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              Center(
+                child: Text(
+                  isEdit ? "Confirm Plan Update" : "Confirm Plan Details",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  "Please verify the plan details before proceeding.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // Summary Card
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    // Plan Name
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Plan Name",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            planName,
+                            textAlign: TextAlign.end,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFE2E8F0),
+                      ),
+                    ),
+
+                    // Duration
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Duration",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            "$duration Month${duration == '1' ? '' : 's'}",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFE2E8F0),
+                      ),
+                    ),
+
+                    // Price
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Price",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          "₹$price",
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF16A34A),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Description (if present)
+                    if (description.isNotEmpty) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Description",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              description,
+                              textAlign: TextAlign.end,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 22),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => Navigator.pop(dialogCtx, false),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          "Edit Details",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => Navigator.pop(dialogCtx, true),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          isEdit ? "Confirm Update" : "Confirm & Save",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override

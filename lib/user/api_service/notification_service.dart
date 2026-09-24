@@ -1,48 +1,58 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
+  static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-  static final FlutterLocalNotificationsPlugin
-  flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+  static const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'gym_channel',
+    'Gym Notifications',
+    description: 'Gym announcements and reminders',
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
+  );
 
   static Future<void> initialize() async {
-
-    const androidSettings =
-    AndroidInitializationSettings(
+    const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
 
-    const settings =
-    InitializationSettings(
+    const settings = InitializationSettings(
       android: androidSettings,
     );
 
+    await flutterLocalNotificationsPlugin.initialize(settings);
+
+    // Create the high-priority channel on Android OS
     await flutterLocalNotificationsPlugin
-        .initialize(settings);
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
   }
 
   static Future<void> showNotification({
     required String title,
     required String body,
   }) async {
-
-    const androidDetails =
-    AndroidNotificationDetails(
-      'gym_channel',
-      'Gym Notifications',
+    final androidDetails = AndroidNotificationDetails(
+      channel.id,
+      channel.name,
+      channelDescription: channel.description,
       importance: Importance.max,
       priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
     );
 
-    const details =
-    NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
     );
 
-    await flutterLocalNotificationsPlugin
-        .show(
-      0,
+    final id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+
+    await flutterLocalNotificationsPlugin.show(
+      id,
       title,
       body,
       details,

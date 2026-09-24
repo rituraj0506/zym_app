@@ -1,9 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
 import 'package:zymmanagement/theme/app_colors.dart';
+import 'package:zymmanagement/utils/image_helper.dart';
 import '../../../home/presentation/cubit/owner_dashboard_cubit.dart';
 import '../cubit/gym_profile_cubit.dart';
 import '../cubit/gym_profile_state.dart';
@@ -32,33 +31,35 @@ class _CreateGymProfilePageState
   File? selectedImage;
 
   Future<void> pickImage() async {
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
+    final source = await ImageHelper.showImageSourceDialog(
+      context,
+      maxSizeInKb: 200,
+      title: "Select Gym Photo",
+    );
+    if (source == null || !mounted) return;
+
+    final processed = await ImageHelper.pickCropAndCompressImage(
+      context: context,
+      source: source,
+      maxSizeInKb: 200,
+      cropTitle: 'Crop Gym Photo',
     );
 
-    if (picked != null) {
-      final imageExtension =
-      extensionFromPath(picked.path)
-          .toLowerCase();
-
-      if (imageExtension != ".jpg" &&
-          imageExtension != ".jpeg" &&
-          imageExtension != ".png") {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+    if (processed != null && mounted) {
+      final bytes = await processed.length();
+      if (!mounted) return;
+      if (bytes > 200 * 1024) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              "Please select JPG or PNG image",
-            ),
+            content: Text("Image size exceeds 200 KB limit. Please select a smaller photo."),
+            backgroundColor: Colors.red,
           ),
         );
-
         return;
       }
 
       setState(() {
-        selectedImage = File(picked.path);
+        selectedImage = processed;
       });
     }
   }
@@ -90,10 +91,6 @@ class _CreateGymProfilePageState
       controller.text =
       "$hour:$minute $period";
     }
-  }
-
-  String extensionFromPath(String path) {
-    return p.extension(path);
   }
 
   @override
@@ -312,6 +309,25 @@ class _CreateGymProfilePageState
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 13,
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            "Max 200 KB • Auto-compressed",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
