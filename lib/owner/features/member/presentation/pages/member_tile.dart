@@ -58,7 +58,7 @@ class MemberTile extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -154,7 +154,7 @@ class MemberTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.2),
+                                color: AppColors.primary.withValues(alpha: 0.2),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
@@ -196,7 +196,7 @@ class MemberTile extends StatelessWidget {
                           color: const Color(0x1A25D366),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFF25D366).withOpacity(0.3),
+                            color: const Color(0xFF25D366).withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -295,7 +295,8 @@ class MemberTile extends StatelessWidget {
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final exp = DateTime(expiryDate!.year, expiryDate!.month, expiryDate!.day);
+    final expLocal = expiryDate!.toLocal();
+    final exp = DateTime(expLocal.year, expLocal.month, expLocal.day);
     final diff = exp.difference(today).inDays;
 
     final Color bgColor;
@@ -317,12 +318,12 @@ class MemberTile extends StatelessWidget {
       bgColor = const Color(0xFFFEF3C7);
       textColor = const Color(0xFFD97706);
       icon = Icons.access_time_rounded;
-      label = "Exp: ${DateFormat('dd MMM').format(expiryDate!)} (${diff}d left)";
+      label = "Exp: ${DateFormat('dd MMM').format(expLocal)} (${diff}d left)";
     } else {
       bgColor = const Color(0xFFECFDF5);
       textColor = const Color(0xFF059669);
       icon = Icons.event_available_rounded;
-      label = "Exp: ${DateFormat('dd MMM yyyy').format(expiryDate!)}";
+      label = "Exp: ${DateFormat('dd MMM yyyy').format(expLocal)}";
     }
 
     return Container(
@@ -377,13 +378,13 @@ class MemberTile extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primary.withValues(alpha: 0.2),
               width: 1.5,
             ),
           ),
           child: CircleAvatar(
             radius: radius,
-            backgroundColor: AppColors.primary.withOpacity(0.08),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.08),
             backgroundImage: hasImage ? CachedNetworkImageProvider(image) : null,
             child: !hasImage
                 ? (initials.isNotEmpty
@@ -528,7 +529,7 @@ class MemberTile extends StatelessWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -553,7 +554,7 @@ class MemberTile extends StatelessWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Colors.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -574,31 +575,32 @@ class MemberTile extends StatelessWidget {
                     onEdit?.call();
                   },
                 ),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF25D366).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                if (onDownloadPdf != null)
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF25D366).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        color: Color(0xFF25D366),
+                        size: 20,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.receipt_long_rounded,
-                      color: Color(0xFF25D366),
-                      size: 20,
+                    title: const Text(
+                      "Receipt PDF (Share / View)",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
                     ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      onDownloadPdf?.call();
+                    },
                   ),
-                  title: const Text(
-                    "Receipt PDF (Share / View)",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    onDownloadPdf?.call();
-                  },
-                ),
               ],
             ),
           ),

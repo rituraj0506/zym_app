@@ -116,6 +116,9 @@ class MemberCubit extends Cubit<MemberState> {
     required String planId,
     required String paymentMode,
     required File? profilePhoto,
+    bool isExistingMember = false,
+    String? customExpiryDate,
+    String? joiningDate,
   }) async {
     try {
       emit(const AddMemberLoading());
@@ -127,8 +130,13 @@ class MemberCubit extends Cubit<MemberState> {
         "aadhaarNo": aadhaarNo,
         "email": email,
         "password": password,
-        "planId": planId,
+        if (planId.isNotEmpty) "planId": planId,
         "paymentMode": paymentMode,
+        if (isExistingMember) ...{
+          "isExistingMember": "true",
+          "customExpiryDate": ?customExpiryDate,
+          "joiningDate": ?joiningDate,
+        },
 
         if (profilePhoto != null)
           "profilePhoto": await MultipartFile.fromFile(
@@ -181,6 +189,7 @@ class MemberCubit extends Cubit<MemberState> {
     required String email,
     required String planId,
     File? profilePhoto,
+    String? customExpiryDate,
   }) async {
 
     try {
@@ -195,6 +204,7 @@ class MemberCubit extends Cubit<MemberState> {
         "aadhaarNo": aadhaarNo,
         "email": email,
         "planId": planId,
+        "customExpiryDate": ?customExpiryDate,
 
         if (profilePhoto != null)
           "profilePhoto": await MultipartFile.fromFile(

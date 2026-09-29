@@ -9,6 +9,7 @@ import '../cubit/user_profile_cubit.dart';
 import '../cubit/user_profile_state.dart';
 import 'package:zymmanagement/user/api_service/fcm_api_service.dart';
 import 'package:zymmanagement/user/model/user_profile_response.dart';
+import 'package:zymmanagement/owner/features/profile/presentation/pages/change_password_page.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
@@ -224,7 +225,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
                           const SizedBox(height: 20),
 
                           /// 4. GYM FACILITY DETAILS
-                          if (gym != null) _buildGymFacilityCard(gym, isTablet),
+                          if (gym != null) ...[
+                            _buildGymFacilityCard(gym, isTablet),
+                            const SizedBox(height: 20),
+                          ],
+
+                          /// 5. SECURITY & SETTINGS (Change Password)
+                          _buildSecurityCard(context, isTablet),
 
                           const SizedBox(height: 30),
                         ],
@@ -513,14 +520,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
     String joinedStr = "N/A";
     if (joiningDate != null) {
       try {
-        joinedStr = DateFormat("dd MMM yyyy").format(DateTime.parse(joiningDate));
+        joinedStr = DateFormat("dd MMM yyyy").format(DateTime.parse(joiningDate).toLocal());
       } catch (_) {}
     }
 
     String expiryStr = "N/A";
     if (expiryDate != null) {
       try {
-        expiryStr = DateFormat("dd MMM yyyy").format(DateTime.parse(expiryDate));
+        expiryStr = DateFormat("dd MMM yyyy").format(DateTime.parse(expiryDate).toLocal());
       } catch (_) {}
     }
 
@@ -912,6 +919,89 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  /// -------------------------------------------------------------
+  /// 5. SECURITY & ACCOUNT SETTINGS (Change Password)
+  /// -------------------------------------------------------------
+  Widget _buildSecurityCard(BuildContext context, bool isTablet) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ChangePasswordPage(),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: EdgeInsets.all(isTablet ? 22 : 18),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDE9FE),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.lock_outline_rounded,
+                    color: Color(0xFF6C63FF),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Change Password",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        "Update your account login password",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: Color(0xFF94A3B8),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

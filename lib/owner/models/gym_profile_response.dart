@@ -112,6 +112,8 @@ class Owner {
   final String? email;
   final String? mobNo;
   final String? role;
+  final DateTime? subscriptionExpiryDate;
+  final bool? isBlocked;
 
   Owner({
     this.id,
@@ -119,6 +121,8 @@ class Owner {
     this.email,
     this.mobNo,
     this.role,
+    this.subscriptionExpiryDate,
+    this.isBlocked,
   });
 
   factory Owner.fromJson(
@@ -130,6 +134,10 @@ class Owner {
       email: json['email'],
       mobNo: json['mobNo']?.toString(),
       role: json['role'],
+      subscriptionExpiryDate: json['subscriptionExpiryDate'] != null
+          ? DateTime.parse(json['subscriptionExpiryDate'])
+          : null,
+      isBlocked: json['isBlocked'] as bool?,
     );
   }
 
@@ -140,6 +148,8 @@ class Owner {
       'email': email,
       'mobNo': mobNo,
       'role': role,
+      'subscriptionExpiryDate': subscriptionExpiryDate?.toIso8601String(),
+      'isBlocked': isBlocked,
     };
   }
 }

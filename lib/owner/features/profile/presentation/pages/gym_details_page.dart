@@ -23,22 +23,30 @@ class GymDetailsPage extends StatelessWidget {
       const Color(0xFFF5F6FA),
 
       appBar: AppBar(
+        backgroundColor: Colors.white,
         elevation: 0,
-
-        backgroundColor:
-        Colors.transparent,
-
-        foregroundColor:
-        Colors.black,
-
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textPrimary,
+            size: 20,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         centerTitle: true,
-
         title: const Text(
           "Gym Details",
-
           style: TextStyle(
-            fontWeight:
-            FontWeight.bold,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            color: Colors.grey.shade200,
+            height: 1,
           ),
         ),
       ),
@@ -52,6 +60,80 @@ class GymDetailsPage extends StatelessWidget {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
+          }
+
+          if (state is GymProfileError) {
+            final errorMsg = state.message.toLowerCase();
+            final bool isNotFound = errorMsg.contains("not found");
+            if (!isNotFound) {
+              return Center(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFEF4444).withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.cloud_off_rounded,
+                          size: 46,
+                          color: Color(0xFFDC2626),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Connection Error",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Unable to load gym details. Please check your internet or server connection.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          context.read<GymProfileCubit>().getGymProfile();
+                        },
+                        icon: const Icon(Icons.refresh_rounded, size: 20),
+                        label: const Text(
+                          "Retry",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 28, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
           }
 
           if (state is! GymProfileDataSuccess || state.profile.data == null) {
@@ -180,8 +262,7 @@ class GymDetailsPage extends StatelessWidget {
                     boxShadow: [
 
                       BoxShadow(
-                        color: Colors.deepPurple
-                            .withOpacity(.22),
+                        color: Colors.deepPurple.withValues(alpha: 0.22),
 
                         blurRadius: 22,
 
@@ -373,8 +454,7 @@ class GymDetailsPage extends StatelessWidget {
                         boxShadow: [
 
                           BoxShadow(
-                            color: Colors.black
-                                .withOpacity(.08),
+                            color: Colors.black.withValues(alpha: 0.08),
 
                             blurRadius: 18,
 
@@ -448,8 +528,7 @@ class GymDetailsPage extends StatelessWidget {
 
                               Colors.transparent,
 
-                              Colors.black
-                                  .withOpacity(.55),
+                              Colors.black.withValues(alpha: 0.55),
                             ],
                           ),
                         ),
@@ -533,8 +612,7 @@ class GymDetailsPage extends StatelessWidget {
                     boxShadow: [
 
                       BoxShadow(
-                        color:
-                        Colors.black.withOpacity(.04),
+                        color: Colors.black.withValues(alpha: 0.04),
 
                         blurRadius: 14,
 
@@ -650,9 +728,7 @@ class GymDetailsPage extends StatelessWidget {
           height: 42,
 
           decoration: BoxDecoration(
-            color:
-            Colors.deepPurple
-                .withOpacity(.08),
+            color: Colors.deepPurple.withValues(alpha: 0.08),
 
             borderRadius:
             BorderRadius.circular(

@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:zymmanagement/network/api_end_point.dart';
 import 'package:zymmanagement/network/secure_storge.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
 import 'package:zymmanagement/user/api_service/fcm_service.dart';
+import 'package:zymmanagement/utils/support_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -90,9 +92,17 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        showError(
-          decoded["message"] ?? "Login failed",
-        );
+        final message = (decoded["message"] ?? "Login failed").toString();
+        final bool isSubscriptionExpired = decoded["isSubscriptionExpired"] == true ||
+            message.toLowerCase().contains("subscription has expired");
+
+        if (isSubscriptionExpired) {
+          final supportPhone =
+              decoded["supportNumber"]?.toString() ?? SupportHelper.superAdminPhone;
+          _showSubscriptionExpiredDialog(supportPhone: supportPhone);
+        } else {
+          showError(message);
+        }
       }
     } catch (e) {
       showError(e.toString());
@@ -103,6 +113,131 @@ class _LoginScreenState extends State<LoginScreen> {
         isLoading = false;
       });
     }
+  }
+
+  void _showSubscriptionExpiredDialog({required String supportPhone}) {
+    final userIdentifier = emailController.text.trim();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 22),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFFECACA), width: 1.5),
+              ),
+              child: const Icon(
+                Icons.lock_clock_rounded,
+                color: Color(0xFFDC2626),
+                size: 36,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              "Subscription Expired",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Your GymFlow SaaS plan has expired. Contact Super Admin on WhatsApp to renew your plan and instantly restore dashboard access.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                color: Colors.grey.shade600,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                SupportHelper.openWhatsApp(
+                  phone: supportPhone,
+                  message:
+                      "Hello GymFlow Support, my subscription has expired for my gym account ($userIdentifier). I want to renew my plan.",
+                );
+              },
+              icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 20),
+              label: const Text(
+                "Renew via WhatsApp",
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF25D366),
+                minimumSize: const Size(double.infinity, 52),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                SupportHelper.callSupport(phone: supportPhone);
+              },
+              icon: Icon(Icons.phone_rounded, color: Colors.grey.shade800, size: 18),
+              label: Text(
+                "Call Super Admin ($supportPhone)",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                side: BorderSide(color: Colors.grey.shade300),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                "Close",
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void showError(String message) {

@@ -36,7 +36,7 @@ class MemberProfileSheet extends StatelessWidget {
 
   String _formatDate(DateTime? date) {
     if (date == null) return "N/A";
-    return DateFormat("dd MMM yyyy").format(date);
+    return DateFormat("dd MMM yyyy").format(date.toLocal());
   }
 
   @override
@@ -264,7 +264,8 @@ class MemberProfileSheet extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // Membership & Plan Details Card
-                  _buildSectionHeader("MEMBERSHIP & PLAN"),
+                  _buildSectionHeader(
+                      member.isExistingMember ? "MEMBERSHIP DETAILS" : "MEMBERSHIP & PLAN"),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -281,19 +282,26 @@ class MemberProfileSheet extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildInfoRow(
-                          icon: Icons.card_membership_rounded,
-                          label: "Current Plan",
-                          value: "$planName ($planMonths Months)",
-                          highlightValue: true,
-                        ),
-                        const Divider(height: 20),
-                        _buildInfoRow(
-                          icon: Icons.payments_outlined,
-                          label: "Plan Price",
-                          value: "₹$planPrice",
-                        ),
-                        const Divider(height: 20),
+                        if (!member.isExistingMember) ...[
+                          _buildInfoRow(
+                            icon: Icons.card_membership_rounded,
+                            label: "Current Plan",
+                            value: planMonths > 0
+                                ? (planName.toLowerCase().contains("month") ||
+                                        planName.toLowerCase().contains("year")
+                                    ? planName
+                                    : "$planName ($planMonths Months)")
+                                : planName,
+                            highlightValue: true,
+                          ),
+                          const Divider(height: 20),
+                          _buildInfoRow(
+                            icon: Icons.payments_outlined,
+                            label: "Plan Price",
+                            value: "₹$planPrice",
+                          ),
+                          const Divider(height: 20),
+                        ],
                         _buildInfoRow(
                           icon: Icons.calendar_today_rounded,
                           label: "Joining Date",

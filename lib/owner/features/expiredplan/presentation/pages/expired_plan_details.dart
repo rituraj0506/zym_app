@@ -553,19 +553,14 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                                     }
 
                                     int daysLeft = 0;
+                                    DateTime? localExpiry;
 
                                     if (expiryDate != null) {
-
-                                      final difference =
-                                      expiryDate.difference(
-                                        DateTime.now(),
-                                      );
-
-                                      daysLeft =
-                                      difference.inHours <= 24
-                                          ? 1
-                                          : (difference.inHours / 24)
-                                          .ceil();
+                                      localExpiry = expiryDate.toLocal();
+                                      final now = DateTime.now();
+                                      final today = DateTime(now.year, now.month, now.day);
+                                      final expDay = DateTime(localExpiry.year, localExpiry.month, localExpiry.day);
+                                      daysLeft = expDay.difference(today).inDays;
                                     }
 
                                     return Container(
@@ -703,7 +698,11 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
 
                                                       child: Text(
                                                         selectedTab == 0
-                                                            ? "Expires in $daysLeft day${daysLeft > 1 ? "s" : ""}"
+                                                            ? (daysLeft < 0
+                                                                ? "Expired"
+                                                                : daysLeft == 0
+                                                                    ? "Expires Today"
+                                                                    : "Expires in $daysLeft day${daysLeft > 1 ? "s" : ""}")
                                                             : "Membership Expired",
 
                                                         style: TextStyle(
@@ -728,11 +727,11 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                                                     ),
 
                                                     Text(
-                                                      expiryDate != null
+                                                      localExpiry != null
                                                           ? DateFormat(
                                                         "dd MMM yyyy",
                                                       ).format(
-                                                        expiryDate,
+                                                        localExpiry,
                                                       )
                                                           : "",
 

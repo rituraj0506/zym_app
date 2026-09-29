@@ -7,6 +7,7 @@ import 'package:zymmanagement/theme/app_colors.dart';
 import '../../../plan/presentation/pages/add_plan__page.dart';
 import '../../../plan/presentation/pages/plan_details_page.dart';
 import '../../../profile/presentation/pages/create_gym_profile_page.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 import '../cubit/owner_dashboard_cubit.dart';
 import '../cubit/owner_dashboard_state.dart';
 
@@ -124,62 +125,73 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                       /// HEADER
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: isTablet ? 32 : 26,
-                            backgroundColor: AppColors.primaryLight,
-                            backgroundImage: hasGymImage
-                                ? NetworkImage(
-                                    gymImage.replaceAll(
-                                      "127.0.0.1",
-                                      "10.0.2.2",
-                                    ),
-                                  )
-                                : null,
-                            onBackgroundImageError: hasGymImage
-                                ? (exception, stackTrace) {}
-                                : null,
-                            child: !hasGymImage
-                                ? const Icon(
-                                    Icons.storefront_rounded,
-                                    color: AppColors.primary,
-                                  )
-                                : null,
-                          ),
-
-                          SizedBox(width: isTablet ? 16 : 12),
-
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-
-                              children: [
-                                Text(
-                                  "Hello, ${dashboardData.data?.owner?.name ?? "Owner"} 👋",
-
-                                  style: TextStyle(
-                                    fontSize: isTablet ? 24 : 18,
-
-                                    fontWeight: FontWeight.bold,
-
-                                    color: AppColors.textPrimary,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const ProfilePage(),
                                   ),
-                                ),
-
-                                const SizedBox(height: 4),
-
-                                Text(
-                                  dashboardData.data?.gym?.gymName ??
-                                      "Setup Your Gym",
-
-                                  style: TextStyle(
-                                    fontSize: isTablet ? 15 : 13,
-
-                                    color: AppColors.textSecondary,
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: isTablet ? 32 : 26,
+                                    backgroundColor: AppColors.primaryLight,
+                                    backgroundImage: hasGymImage
+                                        ? NetworkImage(
+                                            gymImage.replaceAll(
+                                              "127.0.0.1",
+                                              "10.0.2.2",
+                                            ),
+                                          )
+                                        : null,
+                                    onBackgroundImageError: hasGymImage
+                                        ? (exception, stackTrace) {}
+                                        : null,
+                                    child: !hasGymImage
+                                        ? const Icon(
+                                            Icons.storefront_rounded,
+                                            color: AppColors.primary,
+                                          )
+                                        : null,
                                   ),
-                                ),
-                              ],
+
+                                  SizedBox(width: isTablet ? 16 : 12),
+
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Hello, ${dashboardData.data?.owner?.name ?? "Owner"} 👋",
+                                          style: TextStyle(
+                                            fontSize: isTablet ? 24 : 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          dashboardData.data?.gym?.gymName ??
+                                              "Setup Your Gym",
+                                          style: TextStyle(
+                                            fontSize: isTablet ? 15 : 13,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+
+                          const SizedBox(width: 8),
 
                           InkWell(
                             onTap: (){

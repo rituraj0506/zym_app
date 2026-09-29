@@ -4,6 +4,7 @@ import '../../../../models/transaction_history_response.dart';
 import '../../cubit/transaction_details_cubit.dart';
 import '../../cubit/transaction_details_state.dart';
 import 'package:intl/intl.dart';
+import '../../../../../theme/app_colors.dart';
 
 class TransactionDetailsPage extends StatefulWidget {
   const TransactionDetailsPage({super.key});
@@ -169,15 +170,15 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
 
   Widget _buildAppBar() {
     return Container(
-      height: 70,
+      height: 60,
       padding: const EdgeInsets.symmetric(
-        horizontal: 16,
+        horizontal: 8,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: Color(0xffEAEAEA),
+            color: Colors.grey.shade200,
           ),
         ),
       ),
@@ -187,17 +188,21 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
             onPressed: () {
               Navigator.pop(context);
             },
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           const Text(
             "Payments",
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
-
         ],
       ),
     );

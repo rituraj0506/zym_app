@@ -899,8 +899,8 @@ class _MemberDetailsPageState
           mobNo: memberPhone,
           status: member.memberStatus ?? "",
           image: member.profilePhoto ?? "",
-          planName: member.plan?.planName,
-          planMonths: member.plan?.durationInMonths,
+          planName: member.isExistingMember ? "Ongoing Membership" : member.plan?.planName,
+          planMonths: member.isExistingMember ? null : member.plan?.durationInMonths,
           expiryDate: member.expiryDate,
           isTablet: isTablet,
           onEdit: () {
@@ -918,12 +918,14 @@ class _MemberDetailsPageState
               }
             });
           },
-          onDownloadPdf: () async {
-            final memberId = member.id ?? "";
-            context
-                .read<MemberFeeCubit>()
-                .downloadLatestReceiptPdf(memberId);
-          },
+          onDownloadPdf: (member.hasReceipt == false)
+              ? null
+              : () async {
+                  final memberId = member.id ?? "";
+                  context
+                      .read<MemberFeeCubit>()
+                      .downloadLatestReceiptPdf(memberId);
+                },
           onViewProfile: () {
             MemberProfileSheet.show(
               context,

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zymmanagement/theme/app_colors.dart';
 import 'package:zymmanagement/utils/image_helper.dart';
 import '../../../home/presentation/cubit/owner_dashboard_cubit.dart';
+import '../../../home/presentation/cubit/owner_dashboard_state.dart';
 import '../cubit/gym_profile_cubit.dart';
 import '../cubit/gym_profile_state.dart';
 
@@ -29,6 +30,50 @@ class _CreateGymProfilePageState
   final closingTimeController = TextEditingController();
 
   File? selectedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkExistingGym();
+    });
+  }
+
+  void _checkExistingGym() {
+    final dashState = context.read<OwnerDashboardCubit>().state;
+    String existingName = "";
+    if (dashState is OwnerDashboardLoaded) {
+      existingName = dashState.dashboardData.data?.gym?.gymName ?? "";
+    }
+    final profileState = context.read<GymProfileCubit>().state;
+    if (profileState is GymProfileDataSuccess) {
+      final pName = profileState.profile.data?.gymName ?? "";
+      if (pName.isNotEmpty) existingName = pName;
+    }
+
+    if (existingName.isNotEmpty && mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text("Gym Profile Exists"),
+          content: Text(
+              "Your gym '$existingName' is already registered. Multiple gym creation is not allowed. You can edit gym details from the Gym Details screen."),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
   Future<void> pickImage() async {
     final source = await ImageHelper.showImageSourceDialog(
@@ -174,9 +219,7 @@ class _CreateGymProfilePageState
 
                       boxShadow: [
                         BoxShadow(
-                          color: Colors
-                              .deepPurple
-                              .withOpacity(.18),
+                          color: Colors.deepPurple.withValues(alpha: 0.18),
                           blurRadius: 20,
                           offset:
                           const Offset(0, 10),
@@ -462,6 +505,20 @@ class _CreateGymProfilePageState
                         if (formKey
                             .currentState!
                             .validate()) {
+                          final dashState =
+                              context.read<OwnerDashboardCubit>().state;
+                          if (dashState is OwnerDashboardLoaded &&
+                              (dashState.dashboardData.data?.gym?.gymName ?? "")
+                                  .isNotEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    "You already have a gym registered. Multiple gyms are not allowed."),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
                           context
                               .read<
                               GymProfileCubit>()

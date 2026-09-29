@@ -27,10 +27,11 @@ class _UserHomePageState extends State<UserHomePage> {
     context.read<UserDashboardCubit>().fetchUserDashboard();
     context.read<UserNotificationCubit>().fetchNotifications();
 
-    // Real-time badge update when notification arrives while app is open
+    // Real-time badge & dashboard update when notification arrives while app is open
     FCMService.onNotificationReceived = () {
       if (mounted) {
         context.read<UserNotificationCubit>().fetchNotifications(isRefresh: true);
+        context.read<UserDashboardCubit>().fetchUserDashboard(forceRefresh: true);
       }
     };
   }
@@ -174,7 +175,13 @@ class _UserHomePageState extends State<UserHomePage> {
                           const SizedBox(height: 18),
 
                           /// 3. DIGITAL MEMBERSHIP VIP PASS CARD (Clean, no redundant QR button)
-                          _buildDigitalMembershipCard(member, plan, gym, isTablet),
+                          _buildDigitalMembershipCard(
+                            member,
+                            plan,
+                            gym,
+                            isTablet,
+                            onTap: () => _showMembershipDetailsSheet(context, data),
+                          ),
 
                           const SizedBox(height: 22),
 
@@ -566,25 +573,41 @@ class _UserHomePageState extends State<UserHomePage> {
     Member? member,
     Plan? plan,
     Gym? gym,
-    bool isTablet,
-  ) {
+    bool isTablet, {
+    VoidCallback? onTap,
+  }) {
     final String status = (member?.memberStatus ?? "active").toUpperCase();
     final bool isActive = status == "ACTIVE";
 
     String expiryText = "No Expiry";
+    IconData expiryIcon = Icons.timer_outlined;
     if (plan?.expiryDate != null) {
-      final formatted = DateFormat("dd MMM yyyy").format(plan!.expiryDate!);
-      final int daysLeft = plan.daysLeft ?? 0;
+      final expLocal = plan!.expiryDate!.toLocal();
+      final formatted = DateFormat("dd MMM yyyy").format(expLocal);
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final expDay = DateTime(expLocal.year, expLocal.month, expLocal.day);
+      final int daysLeft = expDay.difference(today).inDays;
+
       if (daysLeft < 0) {
         expiryText = "Expired on $formatted";
+        expiryIcon = Icons.error_outline_rounded;
       } else if (daysLeft == 0) {
         expiryText = "Expires Today!";
+        expiryIcon = Icons.alarm_rounded;
+      } else if (daysLeft == 1) {
+        expiryText = "Exp: $formatted (1 day left)";
+        expiryIcon = Icons.access_time_rounded;
       } else {
         expiryText = "Exp: $formatted ($daysLeft days left)";
+        expiryIcon = Icons.timer_outlined;
       }
     }
 
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       width: double.infinity,
       padding: EdgeInsets.all(isTablet ? 28 : 22),
       decoration: BoxDecoration(
@@ -724,7 +747,7 @@ class _UserHomePageState extends State<UserHomePage> {
             child: Row(
               children: [
                 Icon(
-                  Icons.timer_outlined,
+                  expiryIcon,
                   color: Colors.white.withValues(alpha: 0.9),
                   size: 16,
                 ),
@@ -746,8 +769,9 @@ class _UserHomePageState extends State<UserHomePage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// -------------------------------------------------------------
   /// 4. ATTENDANCE & PUNCTUALITY CARD (Overflow-free)
@@ -801,7 +825,7 @@ class _UserHomePageState extends State<UserHomePage> {
                     const SizedBox(width: 10),
                     Flexible(
                       child: Text(
-                        "Attendance Overview",
+                        "Attendance",
                         style: TextStyle(
                           fontSize: isTablet ? 18 : 16,
                           fontWeight: FontWeight.w700,
@@ -1058,14 +1082,7 @@ class _UserHomePageState extends State<UserHomePage> {
               color: const Color(0xFF6C63FF),
               bgColor: const Color(0xFFEDE9FE),
               onTap: () {
-                _showFeatureSheet(
-                  context,
-                  title: "Membership Information",
-                  icon: Icons.card_membership_rounded,
-                  color: const Color(0xFF6C63FF),
-                  description:
-                      "Plan: ${data?.plan?.planName ?? 'N/A'}\nStatus: ${(data?.member?.memberStatus ?? 'active').toUpperCase()}\nMember ID: ${data?.member?.id ?? 'N/A'}",
-                );
+                _showMembershipDetailsSheet(context, data);
               },
             ),
 
@@ -1312,12 +1329,16 @@ class _UserHomePageState extends State<UserHomePage> {
                     children: [
                       Icon(Icons.light_mode_outlined, size: 16, color: Color(0xFF64748B)),
                       SizedBox(width: 8),
-                      Text(
-                        "Increase screen brightness for quick scanner read",
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF475569),
+                      Flexible(
+                        child: Text(
+                          "Increase brightness for quick scan",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF475569),
+                          ),
                         ),
                       ),
                     ],
@@ -1350,7 +1371,11 @@ class _UserHomePageState extends State<UserHomePage> {
           ),
         );
       },
-    );
+    ).then((_) {
+      if (context.mounted) {
+        context.read<UserDashboardCubit>().fetchUserDashboard(forceRefresh: true);
+      }
+    });
   }
 
   /// Gym Info Dialog
@@ -1421,6 +1446,250 @@ class _UserHomePageState extends State<UserHomePage> {
           ],
         );
       },
+    );
+  }
+
+  /// Dedicated Membership Details Bottom Sheet (Clean, No Technical IDs)
+  void _showMembershipDetailsSheet(
+    BuildContext context,
+    MemberDetailsData? data,
+  ) {
+    final plan = data?.plan;
+    final member = data?.member;
+    final gym = data?.gym;
+
+    final String status = (member?.memberStatus ?? "active").toUpperCase();
+    final bool isActive = status == "ACTIVE";
+
+    String expiryText = "No Expiry Date";
+    if (plan?.expiryDate != null) {
+      final expLocal = plan!.expiryDate!.toLocal();
+      final formatted = DateFormat("dd MMM yyyy").format(expLocal);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final expDay = DateTime(expLocal.year, expLocal.month, expLocal.day);
+      final int daysLeft = expDay.difference(today).inDays;
+
+      if (daysLeft < 0) {
+        expiryText = "Expired on $formatted";
+      } else if (daysLeft == 0) {
+        expiryText = "Expires Today ($formatted)";
+      } else if (daysLeft == 1) {
+        expiryText = "Expires Tomorrow ($formatted)";
+      } else {
+        expiryText = "$formatted ($daysLeft days left)";
+      }
+    }
+
+    String joinedText = "N/A";
+    if (member?.joiningDate != null) {
+      try {
+        final jDate = member!.joiningDate!.toLocal();
+        joinedText = DateFormat("dd MMM yyyy").format(jDate);
+      } catch (_) {}
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(28),
+              topRight: Radius.circular(28),
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    height: 4,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6C63FF).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.card_membership_rounded,
+                            color: Color(0xFF6C63FF),
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          "Membership Details",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                            : const Color(0xFFEF4444).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          color: isActive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Details Card
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    children: [
+                      _membershipDetailRow(
+                        icon: Icons.fitness_center_rounded,
+                        iconColor: const Color(0xFF6C63FF),
+                        title: "Current Plan",
+                        value: plan?.planName ?? "General Membership",
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      ),
+                      _membershipDetailRow(
+                        icon: Icons.timer_outlined,
+                        iconColor: const Color(0xFFF59E0B),
+                        title: "Plan Validity",
+                        value: expiryText,
+                      ),
+                      if (joinedText != "N/A") ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        ),
+                        _membershipDetailRow(
+                          icon: Icons.calendar_today_rounded,
+                          iconColor: const Color(0xFF10B981),
+                          title: "Joined On",
+                          value: joinedText,
+                        ),
+                      ],
+                      if (gym?.gymName != null && gym!.gymName!.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        ),
+                        _membershipDetailRow(
+                          icon: Icons.business_rounded,
+                          iconColor: const Color(0xFF0284C7),
+                          title: "Gym Center",
+                          value: gym.gymName!,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F172A),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      "Close",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _membershipDetailRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: iconColor, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

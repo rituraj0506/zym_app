@@ -1,11 +1,10 @@
 // class Apiendpoint {
 //
-//
 //   static const String baseUrl =
-//       "http://10.233.99.218:8000/api";
+//       "http://192.168.10.46:8000 /api";
 //
 //   static const String imageBaseUrl =
-//       "http://10.233.99.218:8000";
+//       "http://192.168.10.46:8000";
 // }
 
 

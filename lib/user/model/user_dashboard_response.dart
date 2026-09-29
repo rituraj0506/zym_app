@@ -103,7 +103,7 @@ class Member {
       memberStatus: json['memberStatus'],
       qrToken: json['qrToken'],
       joiningDate: json['joiningDate'] != null
-          ? DateTime.parse(json['joiningDate'])
+          ? DateTime.parse(json['joiningDate']).toLocal()
           : null,
     );
   }
@@ -140,7 +140,7 @@ class Plan {
       planName: json['planName'],
       price: json['price'],
       expiryDate: json['expiryDate'] != null
-          ? DateTime.parse(json['expiryDate'])
+          ? DateTime.parse(json['expiryDate']).toLocal()
           : null,
       daysLeft: json['daysLeft'],
     );

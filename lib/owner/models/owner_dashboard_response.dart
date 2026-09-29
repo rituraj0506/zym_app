@@ -70,6 +70,8 @@ class OwnerModel {
   final String? email;
   final String? mobNo;
   final String? role;
+  final DateTime? subscriptionExpiryDate;
+  final bool? isBlocked;
 
   OwnerModel({
     this.id,
@@ -77,6 +79,8 @@ class OwnerModel {
     this.email,
     this.mobNo,
     this.role,
+    this.subscriptionExpiryDate,
+    this.isBlocked,
   });
 
   factory OwnerModel.fromJson(Map<String, dynamic> json) {
@@ -87,6 +91,10 @@ class OwnerModel {
       email: json["email"],
       mobNo: json["mobNo"],
       role: json["role"],
+      subscriptionExpiryDate: json["subscriptionExpiryDate"] != null
+          ? DateTime.parse(json["subscriptionExpiryDate"])
+          : null,
+      isBlocked: json["isBlocked"] as bool?,
     );
   }
 
@@ -97,6 +105,8 @@ class OwnerModel {
       "email": email,
       "mobNo": mobNo,
       "role": role,
+      "subscriptionExpiryDate": subscriptionExpiryDate?.toIso8601String(),
+      "isBlocked": isBlocked,
     };
   }
 }

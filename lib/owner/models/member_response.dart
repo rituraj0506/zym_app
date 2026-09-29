@@ -203,6 +203,10 @@ class MemberData {
 
   final int v;
 
+  final bool hasReceipt;
+
+  final bool isExistingMember;
+
   MemberData({
     this.id = "",
     this.user,
@@ -223,6 +227,8 @@ class MemberData {
     this.createdAt,
     this.updatedAt,
     this.v = 0,
+    this.hasReceipt = true,
+    this.isExistingMember = false,
   });
 
   factory MemberData.fromJson(
@@ -267,7 +273,7 @@ class MemberData {
       expiryDate: json["expiryDate"] != null
           ? DateTime.tryParse(
         json["expiryDate"].toString(),
-      )
+      )?.toLocal()
           : null,
 
       memberStatus:
@@ -280,7 +286,7 @@ class MemberData {
           ? DateTime.tryParse(
         json["lastAttendanceDate"]
             .toString(),
-      )
+      )?.toLocal()
           : null,
 
       isDeleted:
@@ -291,7 +297,7 @@ class MemberData {
           ? DateTime.tryParse(
         json["joiningDate"]
             .toString(),
-      )
+      )?.toLocal()
           : null,
 
       createdAt:
@@ -299,7 +305,7 @@ class MemberData {
           ? DateTime.tryParse(
         json["createdAt"]
             .toString(),
-      )
+      )?.toLocal()
           : null,
 
       updatedAt:
@@ -307,10 +313,15 @@ class MemberData {
           ? DateTime.tryParse(
         json["updatedAt"]
             .toString(),
-      )
+      )?.toLocal()
           : null,
 
       v: (json["__v"] as num?)?.toInt() ?? 0,
+
+      hasReceipt: json["hasReceipt"] as bool? ??
+          !(json["isExistingMember"] as bool? ?? false),
+
+      isExistingMember: json["isExistingMember"] as bool? ?? false,
     );
   }
 
@@ -356,6 +367,10 @@ class MemberData {
 
       "updatedAt":
       updatedAt?.toIso8601String(),
+
+      "hasReceipt": hasReceipt,
+
+      "isExistingMember": isExistingMember,
 
       "__v": v,
     };

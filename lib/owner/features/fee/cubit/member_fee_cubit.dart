@@ -86,8 +86,19 @@ class MemberFeeCubit extends Cubit<MemberFeeState> {
         return;
       }
 
+      final latestPayment = history.data!.first;
+
+      if ((latestPayment.amount ?? 0) <= 0) {
+        emit(
+          MemberFeeError(
+            "No receipt available for pre-existing membership",
+          ),
+        );
+        return;
+      }
+
       final paymentId =
-          history.data!.first.id ?? "";
+          latestPayment.id ?? "";
 
       final pdfBytes =
       await FeeDetailsApiService
