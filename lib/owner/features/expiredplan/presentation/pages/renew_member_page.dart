@@ -39,12 +39,17 @@ class _RenewMemberPageState
   String selectedPaymentMode = "cash";
   late bool isRejoin;
 
+  DateTime? get _localExpiry => widget.expiryDate?.toLocal();
+
   @override
   void initState() {
     super.initState();
-    if (widget.expiryDate != null) {
-      final daysExpired =
-          DateTime.now().difference(widget.expiryDate!).inDays;
+    if (_localExpiry != null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final expDay =
+          DateTime(_localExpiry!.year, _localExpiry!.month, _localExpiry!.day);
+      final daysExpired = today.difference(expDay).inDays;
       isRejoin = widget.allowRejoin && daysExpired > 30;
     } else {
       isRejoin = false;
@@ -238,15 +243,6 @@ class _RenewMemberPageState
                                 ),
                               ),
                               const SizedBox(height: 3),
-                              Text(
-                                widget.expiryDate != null
-                                    ? "Expired: ${DateFormat('dd MMM yyyy').format(widget.expiryDate!)} (${DateTime.now().difference(widget.expiryDate!).inDays} days ago)"
-                                    : "Select a membership plan",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 12,
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -842,8 +838,8 @@ class _RenewMemberPageState
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      widget.expiryDate != null
-                          ? "From: ${DateFormat('dd MMM').format(widget.expiryDate!)}"
+                      _localExpiry != null
+                          ? "From: ${DateFormat('dd MMM').format(_localExpiry!)}"
                           : "Old cycle",
                       style: TextStyle(
                         fontSize: 11,
@@ -929,9 +925,12 @@ class _RenewMemberPageState
   }
 
   Widget _buildWarningBanner() {
-    if (widget.expiryDate == null) return const SizedBox();
-    final daysExpired =
-        DateTime.now().difference(widget.expiryDate!).inDays;
+    if (_localExpiry == null) return const SizedBox();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expDay =
+        DateTime(_localExpiry!.year, _localExpiry!.month, _localExpiry!.day);
+    final daysExpired = today.difference(expDay).inDays;
 
     if (isRejoin && daysExpired <= 30) {
       return Container(
@@ -949,7 +948,7 @@ class _RenewMemberPageState
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                "Member expired only $daysExpired day${daysExpired == 1 ? '' : 's'} ago. Rejoining starts from today instead of previous expiry (${DateFormat('dd MMM').format(widget.expiryDate!)}).",
+                "Member expired only $daysExpired day${daysExpired == 1 ? '' : 's'} ago. Rejoining starts from today instead of previous expiry (${DateFormat('dd MMM').format(_localExpiry!)}).",
                 style: const TextStyle(
                     fontSize: 11.5, color: Color(0xff92400E)),
               ),
@@ -973,7 +972,7 @@ class _RenewMemberPageState
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                "Member expired $daysExpired days ago. Regular Renew will add to the old date (${DateFormat('dd MMM yyyy').format(widget.expiryDate!)}). Fresh Rejoin is recommended.",
+                "Member expired $daysExpired days ago. Regular Renew will add to the old date (${DateFormat('dd MMM yyyy').format(_localExpiry!)}). Fresh Rejoin is recommended.",
                 style: const TextStyle(
                     fontSize: 11.5, color: Color(0xff991B1B)),
               ),
@@ -990,7 +989,7 @@ class _RenewMemberPageState
 
     final startDate = isRejoin
         ? DateTime.now()
-        : (widget.expiryDate ?? DateTime.now());
+        : (_localExpiry ?? DateTime.now());
     final endDate = _addMonths(startDate, selectedPlanDuration!);
 
     return Container(

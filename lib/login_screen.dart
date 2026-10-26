@@ -475,20 +475,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 14),
 
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-
-                  child: const Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+              // Align(
+              //   alignment: Alignment.centerRight,
+              //   child: TextButton(
+              //     onPressed: () {},
+              //
+              //     child: const Text(
+              //       "Forgot Password?",
+              //       style: TextStyle(
+              //         color: AppColors.primary,
+              //         fontWeight: FontWeight.w600,
+              //       ),
+              //     ),
+              //   ),
+              // ),
 
               const SizedBox(height: 24),
 
@@ -537,32 +537,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 30),
 
-              Row(
-                mainAxisAlignment:
-                MainAxisAlignment.center,
-
-                children: [
-                  const Text(
-                    "Don’t have an account?",
-                    style: TextStyle(
-                      color:
-                      AppColors.textSecondary,
-                    ),
-                  ),
-
-                  TextButton(
-                    onPressed: () {},
-
-                    child: const Text(
-                      "Register",
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              // Row(
+              //   mainAxisAlignment:
+              //   MainAxisAlignment.center,
+              //
+              //   children: [
+              //     const Text(
+              //       "Don’t have an account?",
+              //       style: TextStyle(
+              //         color:
+              //         AppColors.textSecondary,
+              //       ),
+              //     ),
+              //
+              //     TextButton(
+              //       onPressed: () {},
+              //
+              //       child: const Text(
+              //         "Register",
+              //         style: TextStyle(
+              //           color: AppColors.primary,
+              //           fontWeight: FontWeight.bold,
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
             ],
           ),
         ),

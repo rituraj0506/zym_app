@@ -148,7 +148,7 @@ class MemberData {
           : null,
 
       expiryDate: json['expiryDate'] != null
-          ? DateTime.parse(json['expiryDate'])
+          ? DateTime.parse(json['expiryDate']).toLocal()
           : null,
 
       memberStatus: json['memberStatus'],
@@ -156,15 +156,15 @@ class MemberData {
       isDeleted: json['isDeleted'],
 
       joiningDate: json['joiningDate'] != null
-          ? DateTime.parse(json['joiningDate'])
+          ? DateTime.parse(json['joiningDate']).toLocal()
           : null,
 
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
+          ? DateTime.parse(json['createdAt']).toLocal()
           : null,
 
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
+          ? DateTime.parse(json['updatedAt']).toLocal()
           : null,
 
       v: json['__v'],
@@ -173,7 +173,7 @@ class MemberData {
       json['lastAttendanceDate'] != null
           ? DateTime.parse(
         json['lastAttendanceDate'],
-      )
+      ).toLocal()
           : null,
     );
   }

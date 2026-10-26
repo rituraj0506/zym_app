@@ -765,7 +765,7 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                                                     _openRenewOrRejoinSheet(
                                                       context,
                                                       memberId,
-                                                      expiryDate: expiryDate,
+                                                      expiryDate: localExpiry ?? expiryDate?.toLocal(),
                                                       allowRejoin:
                                                           selectedTab == 1,
                                                     );
@@ -808,7 +808,7 @@ class _ExpiredMemberDetailsState extends State<ExpiredMemberDetails> {
                                                                 Colors.white,
                                                             fontWeight:
                                                                 FontWeight.bold,
-                                                            fontSize: 14,
+                                                            fontSize: 12,
                                                           ),
                                                         ),
                                                       ],
